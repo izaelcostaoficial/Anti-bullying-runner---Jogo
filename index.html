@@ -10,14 +10,17 @@
 </head>
 <body class="theme-dark">
 
+<!-- CANVAS -->
 <canvas id="gameCanvas"></canvas>
+
+<!-- OVERLAYS -->
 <div id="shieldIndicator">🛡️</div>
-<div id="maxLvlBadge">⭐ NÍVEL MÁXIMO!</div>
+<div id="maxLvlBadge"></div>
 <div id="floatNotif"></div>
-<div id="recordBadge">🏆 NOVO RECORDE!</div>
+<div id="recordNotif">🏆 NOVO RECORDE!</div>
 <div id="lifeLostFlash"></div>
-<div class="perfect-confetti" id="confettiContainer"></div>
-<button id="musicToggle" title="Toggle Music">🎵</button>
+<div class="confetti-wrap" id="confettiWrap"></div>
+<button id="musicToggle" title="Música">🎵</button>
 
 <!-- HUD -->
 <div id="hud">
@@ -29,95 +32,94 @@
   <div class="hud-grp">
     <div class="hud-item" id="hudShield" style="display:none">🛡️ ESCUDO</div>
     <div class="hud-item" id="hudLives">❤️❤️❤️</div>
-    <div class="hud-item" id="hudDistEl">0m</div>
+    <div class="hud-item" id="hudDist">0m</div>
   </div>
 </div>
 
-<!-- Power Bar -->
+<!-- POWER BAR -->
 <div id="powerBar">
   <span id="powerBarHint">PODERES</span>
-  <div class="power-slot" id="slot0" onclick="activatePower(0)" title="[ESPAÇO]">
-    <div class="power-icon" id="picon0"><span id="pEmoji0">🛡️</span><div class="power-cooldown-overlay" id="pcd0" style="display:none">-</div></div>
+  <div class="power-slot" onclick="activatePower(0)">
+    <div class="power-icon" id="picon0">🛡️<div class="power-cd" id="pcd0" style="display:none"></div></div>
     <div class="power-label" id="plbl0">Escudo</div>
     <div class="power-key">[SPC]</div>
   </div>
-  <div class="power-slot" id="slot1" onclick="activatePower(1)" title="[Q]">
-    <div class="power-icon" id="picon1"><span id="pEmoji1">⚡</span><div class="power-cooldown-overlay" id="pcd1" style="display:none">-</div></div>
+  <div class="power-slot" onclick="activatePower(1)">
+    <div class="power-icon" id="picon1">⚡<div class="power-cd" id="pcd1" style="display:none"></div></div>
     <div class="power-label" id="plbl1">Velocidade</div>
     <div class="power-key">[Q]</div>
   </div>
-  <div class="power-slot" id="slot2" onclick="activatePower(2)" title="[E]">
-    <div class="power-icon" id="picon2"><span id="pEmoji2">🧲</span><div class="power-cooldown-overlay" id="pcd2" style="display:none">-</div></div>
+  <div class="power-slot" onclick="activatePower(2)">
+    <div class="power-icon" id="picon2">🧲<div class="power-cd" id="pcd2" style="display:none"></div></div>
     <div class="power-label" id="plbl2">Ímã</div>
     <div class="power-key">[E]</div>
   </div>
-  <div class="power-slot" id="slot3" onclick="activatePower(3)" title="[R]">
-    <div class="power-icon" id="picon3"><span id="pEmoji3">🌀</span><div class="power-cooldown-overlay" id="pcd3" style="display:none">-</div></div>
+  <div class="power-slot" onclick="activatePower(3)">
+    <div class="power-icon" id="picon3">🌀<div class="power-cd" id="pcd3" style="display:none"></div></div>
     <div class="power-label" id="plbl3">Lentidão</div>
     <div class="power-key">[R]</div>
   </div>
 </div>
 
+<!-- MOBILE HINT -->
 <div id="mobileHint">
   <div class="mhint">← deslize</div>
   <div class="mhint">deslize →</div>
 </div>
 
-<!-- Splash -->
+<!-- SPLASH -->
 <div id="splash">
   <div class="logo">🛡️</div>
   <h1 id="splashTitle">Anti-Bullying Runner</h1>
-  <p id="splashLoading">CARREGANDO...</p>
+  <p id="splashSub">CARREGANDO...</p>
   <div id="splashBar"><div id="splashFill"></div></div>
   <div id="splashPct">0%</div>
 </div>
 
-<!-- Dilema Modal -->
+<!-- DILEMA MODAL -->
 <div id="dilemaModal">
   <div class="dcard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;">
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <span style="font-size:1.6rem" id="dilemaIcon">🎓</span>
-        <span id="dilemaTag" style="font-size:.72rem;font-weight:800;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;">DILEMA</span>
+    <div class="dilema-header">
+      <div class="dilema-tag-row">
+        <span id="dilemaIcon" style="font-size:1.6rem">🎓</span>
+        <span id="dilemaTag" style="font-size:.72rem;font-weight:800;color:var(--subtext);text-transform:uppercase;letter-spacing:1px">DILEMA</span>
       </div>
-      <div class="dilema-lives" id="dilemaLivesEl">❤️❤️❤️</div>
+      <div class="dilema-lives" id="dilemaLives">❤️❤️❤️</div>
     </div>
     <div class="dilema-q" id="dilemaQ"></div>
     <div class="dilema-opts" id="dilemaOpts"></div>
-    <div class="dilema-result-msg" id="dilemaResultMsg"></div>
-    <div class="dilema-timer"><div class="dilema-timer-fill" id="dilemaTimerFill" style="width:100%"></div></div>
+    <div class="dilema-result" id="dilemaResult"></div>
+    <div class="dilema-timer"><div class="dilema-timer-fill" id="dilemaTimerFill"></div></div>
   </div>
 </div>
 
-<!-- Perfect Screen -->
+<!-- PERFECT SCREEN -->
 <div id="perfectScreen">
   <div class="perfect-card">
     <span class="perfect-star">⭐</span>
     <div class="perfect-title" id="perfectTitle">PERFEITO!</div>
-    <div class="perfect-subtitle" id="perfectSubtitle">Você concluiu todas as perguntas<br>sem errar nenhuma! Incrível!</div>
+    <div class="perfect-subtitle" id="perfectSubtitle"></div>
     <div class="perfect-stats">
       <div class="perfect-stat"><div class="pv" id="pScore">0</div><div class="pk" id="pScoreKey">PONTOS</div></div>
       <div class="perfect-stat"><div class="pv" id="pDist">0m</div><div class="pk" id="pDistKey">DISTÂNCIA</div></div>
       <div class="perfect-stat"><div class="pv" id="pXP">+0</div><div class="pk" id="pXPKey">XP BÔNUS</div></div>
       <div class="perfect-stat"><div class="pv" id="pCoins">+0</div><div class="pk" id="pCoinsKey">MOEDAS BÔNUS</div></div>
     </div>
-    <button class="btn full" id="perfectContinueBtn" style="background:#16a34a;margin-top:.5rem;">🏃 CONTINUAR CORRENDO</button>
-    <button class="btn full outline" id="perfectMenuBtn" style="border-color:#22c55e;color:#4ade80;margin-top:.4rem;">🏠 <span id="perfectMenuLbl">Menu Principal</span></button>
+    <button class="btn full" id="perfectContinueBtn" style="background:#16a34a;margin-top:.5rem">🏃 CONTINUAR</button>
+    <button class="btn full outline" id="perfectMenuBtn" style="border-color:#22c55e;color:#4ade80;margin-top:.4rem">🏠 <span id="perfectMenuLbl">Menu Principal</span></button>
   </div>
 </div>
 
-<!-- Menu -->
+<!-- MENU -->
 <div class="screen active" id="menuScreen">
   <div class="card">
-    <div style="text-align:center;margin-bottom:.5rem;">
-      <span style="font-size:2.5rem;display:block;animation:pulse 2s ease infinite">🛡️</span>
+    <div style="text-align:center;margin-bottom:.5rem">
+      <span style="font-size:2.5rem;display:block;animation:logoPulse 2s ease infinite">🛡️</span>
     </div>
     <h2 id="menuTitle">Anti-Bullying Runner</h2>
 
-    <!-- Cloud Save Badge -->
     <div id="cloudBadge" class="cloud-badge" style="display:none">
-      <span>☁️</span>
-      <span id="cloudBadgeText">Progresso salvo na nuvem</span>
+      <span>☁️</span><span id="cloudBadgeText"></span>
     </div>
 
     <div class="profile-row">
@@ -127,34 +129,36 @@
         <input class="inp" id="nameInp" type="text" maxlength="20" placeholder="Digite seu nome...">
       </div>
     </div>
+
     <div class="xp-bar-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
         <span class="lbl" id="lblXP">XP</span>
-        <span id="xpLvlLabel" style="font-size:.72rem;color:var(--subtext);font-weight:800;"></span>
+        <span id="xpLvlLabel" style="font-size:.72rem;color:var(--subtext);font-weight:800"></span>
       </div>
       <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
       <div class="xp-info"><span id="xpCurrent">0</span><span id="xpMax">5000</span></div>
     </div>
+
     <div class="stats-row">
       <div class="stat-box"><div class="val" id="statBest">0</div><div class="key" id="statBestKey">RECORDE</div></div>
       <div class="stat-box"><div class="val" id="statCoins">0</div><div class="key" id="statCoinsKey">MOEDAS</div></div>
       <div class="stat-box"><div class="val" id="statGames">0</div><div class="key" id="statGamesKey">CORRIDAS</div></div>
     </div>
-    <div style="display:flex;gap:.5rem;margin:.3rem 0;">
-      <div class="stat-box" style="flex:1;"><div class="val" style="color:#60a5fa;" id="statGems">0</div><div class="key">GEMAS</div></div>
-      <div class="stat-box" style="flex:1;"><div class="val" style="color:#22c55e;" id="statPowers">0</div><div class="key">PODERES</div></div>
+    <div style="display:flex;gap:.5rem;margin:.3rem 0">
+      <div class="stat-box" style="flex:1"><div class="val" style="color:#60a5fa" id="statGems">0</div><div class="key">GEMAS</div></div>
+      <div class="stat-box" style="flex:1"><div class="val" style="color:#22c55e" id="statPowers">0</div><div class="key">PODERES</div></div>
     </div>
 
-    <div style="margin:.5rem 0;">
-      <div class="lbl" id="lblTheme" style="margin-bottom:.3rem;">TEMA</div>
+    <div style="margin:.5rem 0">
+      <div class="lbl" id="lblTheme" style="margin-bottom:.3rem">TEMA</div>
       <div class="row-btns">
         <button class="theme-btn active" data-theme="dark" id="themeD">🌙 Escuro</button>
         <button class="theme-btn" data-theme="light" id="themeL">☀️ Claro</button>
         <button class="theme-btn" data-theme="bw" id="themeBW">◑ P&amp;B</button>
       </div>
     </div>
-    <div style="margin:.5rem 0;">
-      <div class="lbl" id="lblLang" style="margin-bottom:.3rem;">IDIOMA</div>
+    <div style="margin:.5rem 0">
+      <div class="lbl" id="lblLang" style="margin-bottom:.3rem">IDIOMA</div>
       <div class="row-btns">
         <button class="lang-btn active" data-lang="pt" id="langPT">🇧🇷 PT</button>
         <button class="lang-btn" data-lang="en" id="langEN">🇺🇸 EN</button>
@@ -163,67 +167,71 @@
     </div>
 
     <div class="menu-grid">
-      <button class="btn" id="playBtn" style="grid-column:1/-1;">🏃 JOGAR</button>
+      <button class="btn" id="playBtn" style="grid-column:1/-1">🏃 JOGAR</button>
       <button class="btn outline" id="topRunBtn">🏆 TOP RUN</button>
       <button class="btn outline" id="shopBtn">🛒 LOJA</button>
-      <button class="btn outline" id="loginBtn" style="grid-column:1/-1;">☁️ <span id="loginBtnLbl">Conta &amp; Nuvem</span></button>
+      <button class="btn outline" id="loginBtn" style="grid-column:1/-1">☁️ <span id="loginBtnLbl">Conta &amp; Nuvem</span></button>
     </div>
   </div>
 </div>
 
-<!-- Shop -->
+<!-- SHOP -->
 <div class="screen" id="shopScreen">
   <div class="card">
     <h2 id="shopTitle">🛒 Loja</h2>
-    <div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:.8rem;">
-      <span style="font-size:.85rem;color:var(--subtext);">🪙 <span style="font-weight:900;color:#fbbf24;" id="shopCoinsDisplay">0</span></span>
-      <span style="font-size:.85rem;color:var(--subtext);">💎 <span style="font-weight:900;color:#60a5fa;" id="shopGemsDisplay">0</span></span>
+    <div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:.8rem">
+      <span style="font-size:.85rem;color:var(--subtext)">🪙 <span style="font-weight:900;color:#fbbf24" id="shopCoins">0</span></span>
+      <span style="font-size:.85rem;color:var(--subtext)">💎 <span style="font-weight:900;color:#60a5fa" id="shopGems">0</span></span>
     </div>
     <div class="shop-grid" id="shopGrid"></div>
-    <button class="btn full outline" id="shopBackBtn" style="margin-top:.8rem;">← <span id="shopBackLbl">Voltar</span></button>
+    <button class="btn full outline" id="shopBackBtn" style="margin-top:.8rem">← <span id="shopBackLbl">Voltar</span></button>
   </div>
 </div>
 
-<!-- Top Run -->
+<!-- TOP RUN -->
 <div class="screen" id="topRunScreen">
   <div class="card">
     <h2>🏆 <span id="topRunTitle">Top Run</span></h2>
-    <div id="topRunTabs" style="display:flex;gap:.4rem;margin-bottom:.8rem;">
-      <button class="login-tab active" id="tabLocal" onclick="showTopTab('local')">📱 Local</button>
-      <button class="login-tab" id="tabGlobal" onclick="showTopTab('global')">🌍 Global</button>
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabLocal" onclick="showTopTab('local')">📱 Local</button>
+      <button class="tab-btn" id="tabGlobal" onclick="showTopTab('global')">🌍 Global</button>
     </div>
     <div class="top-list" id="topList"></div>
-    <button class="btn full outline" id="topBackBtn" style="margin-top:.8rem;">← <span id="topBackLbl">Voltar</span></button>
+    <button class="btn full outline" id="topBackBtn" style="margin-top:.8rem">← <span id="topBackLbl">Voltar</span></button>
   </div>
 </div>
 
-<!-- Login / Conta -->
+<!-- LOGIN / ACCOUNT -->
 <div class="screen" id="loginScreen">
   <div class="card">
     <h2>☁️ <span id="loginTitle">Conta &amp; Nuvem</span></h2>
+
+    <!-- Logged in panel -->
     <div id="loggedPanel" style="display:none">
       <div class="logged-user">
         <div class="logged-avatar" id="loggedAvatar">🧒</div>
         <div class="logged-info">
-          <div class="logged-name" id="loggedName">-</div>
+          <div class="logged-name"  id="loggedName">-</div>
           <div class="logged-email" id="loggedEmail">-</div>
         </div>
-        <span style="font-size:1.3rem;color:#22c55e;">✅</span>
+        <span style="font-size:1.3rem;color:#22c55e">✅</span>
       </div>
-      <div style="margin:.6rem 0;padding:.6rem;background:var(--input-bg);border-radius:10px;border:1px solid var(--card-border);font-size:.82rem;color:var(--subtext);">
-        ☁️ <span id="cloudSyncInfo">Progresso sincronizado com a nuvem. Seus dados são salvos automaticamente após cada corrida.</span>
+      <div style="margin:.6rem 0;padding:.6rem;background:var(--input-bg);border-radius:10px;border:1px solid var(--card-border);font-size:.82rem;color:var(--subtext)">
+        ☁️ <span id="cloudSyncInfo">Progresso sincronizado automaticamente.</span>
       </div>
-      <button class="btn full" id="syncNowBtn" style="margin-top:.3rem;">🔄 <span id="syncNowLbl">Sincronizar Agora</span></button>
-      <button class="btn full outline" id="logoutBtn" style="margin-top:.4rem;">🚪 <span id="logoutLbl">Sair da Conta</span></button>
+      <button class="btn full" id="syncNowBtn" style="margin-top:.3rem">🔄 <span id="syncNowLbl">Sincronizar Agora</span></button>
+      <button class="btn full outline" id="logoutBtn" style="margin-top:.4rem">🚪 <span id="logoutLbl">Sair da Conta</span></button>
     </div>
+
+    <!-- Auth panel -->
     <div id="authPanel">
-      <div class="login-tabs">
-        <button class="login-tab active" id="tabLogin" onclick="switchAuthTab('login')">🔑 Entrar</button>
-        <button class="login-tab" id="tabRegister" onclick="switchAuthTab('register')">✨ Criar Conta</button>
+      <div class="tab-row" style="margin-bottom:.8rem">
+        <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">🔑 Entrar</button>
+        <button class="tab-btn" id="tabRegister" onclick="switchAuthTab('register')">✨ Criar Conta</button>
       </div>
-      <div id="authError" class="login-error"></div>
-      <div id="authSuccess" class="login-success"></div>
-      <div class="login-form" id="loginForm">
+      <div id="authError" class="auth-error"></div>
+      <div id="authSuccess" class="auth-success"></div>
+      <div class="login-form">
         <div>
           <div class="login-label" id="lblEmail">EMAIL</div>
           <input class="inp" id="authEmail" type="email" placeholder="seu@email.com">
@@ -237,35 +245,36 @@
           <input class="inp" id="authName" type="text" maxlength="20" placeholder="Seu nome...">
         </div>
         <button class="btn full" id="authSubmitBtn">🔑 Entrar</button>
-        <div style="font-size:.72rem;color:var(--subtext);text-align:center;margin-top:.3rem;" id="authFootnote">Os dados são salvos localmente no seu dispositivo + nuvem (simulada).</div>
+        <div style="font-size:.72rem;color:var(--subtext);text-align:center;margin-top:.3rem" id="authFootnote">Dados salvos localmente + nuvem (simulada).</div>
       </div>
     </div>
-    <button class="btn full outline" id="loginBackBtn" style="margin-top:.8rem;">← <span id="loginBackLbl">Voltar</span></button>
+
+    <button class="btn full outline" id="loginBackBtn" style="margin-top:.8rem">← <span id="loginBackLbl">Voltar</span></button>
   </div>
 </div>
 
-<!-- Game Over -->
+<!-- GAME OVER -->
 <div class="screen" id="gameOverScreen">
   <div class="card">
-    <div style="text-align:center;font-size:2.8rem;margin-bottom:.3rem;">💀</div>
+    <div style="text-align:center;font-size:2.8rem;margin-bottom:.3rem">💀</div>
     <h2 id="goTitle">GAME OVER</h2>
-    <div id="newRecordBadge">🏆 NOVO RECORDE!</div>
+    <div id="newRecordBadge"></div>
     <div class="go-stats">
       <div class="go-stat"><div class="gv" id="goScore">0</div><div class="gk" id="goScoreKey">PONTOS</div></div>
-      <div class="go-stat"><div class="gv" id="goDist">0m</div><div class="gk" id="goDistKey">DISTÂNCIA</div></div>
-      <div class="go-stat"><div class="gv" id="goCoins">0</div><div class="gk" id="goCoinsKey">MOEDAS</div></div>
-      <div class="go-stat"><div class="gv" id="goGems">0</div><div class="gk" id="goGemsKey">GEMAS</div></div>
+      <div class="go-stat"><div class="gv" id="goDist">0m</div><div class="gk"  id="goDistKey">DISTÂNCIA</div></div>
+      <div class="go-stat"><div class="gv" id="goCoins">0</div><div class="gk"  id="goCoinsKey">MOEDAS</div></div>
+      <div class="go-stat"><div class="gv" id="goGems">0</div><div class="gk"   id="goGemsKey">GEMAS</div></div>
     </div>
-    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border);">
-      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;" id="goXpLabel">XP GANHO</div>
-      <div style="font-size:1.5rem;font-weight:900;color:var(--accent);" id="goXp">+0</div>
+    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border)">
+      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px" id="goXpLabel">XP GANHO</div>
+      <div style="font-size:1.5rem;font-weight:900;color:var(--accent)" id="goXp">+0</div>
     </div>
-    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border);">
-      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;" id="goQLabel">PERGUNTAS</div>
-      <div id="goQStats" style="font-size:1rem;font-weight:700;color:var(--text);margin-top:.2rem;"></div>
+    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border)">
+      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px" id="goQLabel">PERGUNTAS</div>
+      <div id="goQStats" style="font-size:.95rem;font-weight:700;color:var(--text);margin-top:.2rem"></div>
     </div>
     <button class="btn full" id="replayBtn">🔄 <span id="replayLbl">Jogar Novamente</span></button>
-    <button class="btn full outline" id="goMenuBtn">🏠 <span id="goMenuLbl">Menu Principal</span></button>
+    <button class="btn full outline" id="goMenuBtn" style="margin-top:.4rem">🏠 <span id="goMenuLbl">Menu Principal</span></button>
   </div>
 </div>
 
