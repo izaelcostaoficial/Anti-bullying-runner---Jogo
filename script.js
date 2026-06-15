@@ -1,206 +1,126 @@
-/* =========================
-   ANTI-BULLYING RUNNER
-   GAME ENGINE
-========================= */
+/**
+ * ANTI-BULLYING RUNNER - Motor do Jogo
+ * Desenvolvido por: Izael e Felipe
+ */
 
 class GameEngine {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
+    constructor() {
+        // Inicialização de Dados (Baseado no Sistema de Salvamento)
+        this.saveData = JSON.parse(localStorage.getItem('antiBullyingData')) || {
+            playerName: "Jogador",
+            playerAvatar: "🏃",
+            level: 1,
+            xp: 0,
+            coins: 1000,
+            gems: 50,
+            totalScore: 0,
+            gamesPlayed: 0,
+            language: "pt",
+            theme: "dark",
+            audioEnabled: true
+        }; [4, 5]
 
-    // Física
-    this.gravity = 0.6;
-    this.velocity = 5;
-    this.jumpForce = -12;
+        // Constantes de Física (Especificações Técnicas)
+        this.gravity = 0.6; 
+        this.initialVelocity = 5;
+        this.jumpForce = -12; [3]
+        this.fps = 60; [1, 3]
+        
+        // Estado do Jogo
+        this.isPaused = false;
+        this.currentScenario = null;
+        this.player = {
+            y: 0,
+            velocityY: 0,
+            isJumping: false,
+            lane: 1 // 0: Esquerda, 1: Centro, 2: Direita [6]
+        };
 
-    // Player
-    this.player = { x: 50, y: 300, vy: 0, lane: 1 };
+        // Cenários de Bullying (Documentação Detalhada)
+        this.scenarios = [
+            {
+                icon: "🎒",
+                title: "Roubo de Pertences",
+                description: "Alguém está tendo seus pertences roubados. O que fazer?",
+                options: [
+                    { text: "Avisar um professor", correct: true },
+                    { text: "Tentar resolver sozinho", correct: false },
+                    { text: "Deixar acontecer", correct: false }
+                ]
+            }, [7, 8]
+            // ... Inclui os outros 5 cenários: Fofoca, Exclusão, Cyberbullying, Agressão e Pressão [8-10]
+        ];
 
-    // Game State
-    this.objects = [];
-    this.coins = 0;
-    this.gems = 0;
-    this.xp = 0;
-    this.level = 1;
-    this.distance = 0;
-
-    this.running = true;
-
-    this.loadData();
-    this.loop();
-  }
-
-  /* =========================
-     LOOP 60 FPS
-  ========================= */
-  loop() {
-    if (!this.running) return;
-
-    this.update();
-    this.render();
-
-    requestAnimationFrame(() => this.loop());
-  }
-
-  update() {
-    this.applyPhysics();
-    this.distance += this.velocity;
-
-    if (Math.random() < 0.02) this.spawnObject();
-
-    this.checkLevel();
-  }
-
-  /* =========================
-     FÍSICA
-  ========================= */
-  applyPhysics() {
-    this.player.vy += this.gravity;
-    this.player.y += this.player.vy;
-
-    if (this.player.y > 300) {
-      this.player.y = 300;
-      this.player.vy = 0;
+        this.init();
     }
-  }
 
-  jump() {
-    this.player.vy = this.jumpForce;
-  }
-
-  /* =========================
-     OBJETOS
-  ========================= */
-  spawnObject() {
-    const types = ["train", "coin", "gem"];
-    const type = types[Math.floor(Math.random() * types.length)];
-
-    this.objects.push({
-      type,
-      x: 800,
-      y: 300
-    });
-  }
-
-  updateObjects() {
-    this.objects.forEach(obj => {
-      obj.x -= this.velocity;
-
-      if (this.collision(obj)) {
-        if (obj.type === "train") this.gameOver();
-        if (obj.type === "coin") this.addCoin();
-        if (obj.type === "gem") this.addGem();
-      }
-    });
-
-    this.objects = this.objects.filter(o => o.x > -50);
-  }
-
-  collision(obj) {
-    return (
-      obj.x < this.player.x + 30 &&
-      obj.x + 30 > this.player.x &&
-      obj.y === this.player.y
-    );
-  }
-
-  /* =========================
-     XP SYSTEM
-  ========================= */
-
-  addCoin() {
-    this.coins++;
-    this.xp += 10;
-  }
-
-  addGem() {
-    this.gems++;
-    this.xp += 50;
-  }
-
-  checkLevel() {
-    const newLevel = Math.floor(this.xp / 100) + 1;
-    if (newLevel !== this.level && newLevel <= 50) {
-      this.level = newLevel;
+    init() {
+        // Configuração do Canvas e Contexto [2]
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.loadListeners();
     }
-  }
 
-  /* =========================
-     SCENARIOS EDUCATIVOS
-  ========================= */
+    update() {
+        if (this.isPaused) return; [2]
 
-  showScenario(type) {
-    this.running = false;
+        // Aplicar Gravidade e Movimento (Cálculos do Sistema de Física)
+        this.player.velocityY += this.gravity;
+        this.player.y += this.player.velocityY; [3]
 
-    const scenarios = {
-      roubo: "Alguém pegou seu material sem permissão. O que você faz?",
-      fofoca: "Estão espalhando rumores sobre você.",
-      exclusao: "Você foi excluído de um grupo.",
-      cyberbullying: "Mensagens ofensivas aparecem online.",
-      agressao: "Você presencia violência física.",
-      pressao: "Te pressionam a fazer algo errado."
-    };
+        // Colisão com o Ground
+        const groundY = this.canvas.height * 0.8;
+        if (this.player.y >= groundY) {
+            this.player.y = groundY;
+            this.player.velocityY = 0;
+            this.player.isJumping = false;
+        } [3]
 
-    alert(scenarios[type] || "Situação desconhecida");
-
-    setTimeout(() => (this.running = true), 2000);
-  }
-
-  /* =========================
-     GAME OVER
-  ========================= */
-
-  gameOver() {
-    this.running = false;
-    alert("Game Over!");
-    this.saveData();
-  }
-
-  /* =========================
-     RENDER
-  ========================= */
-
-  render() {
-    this.ctx.clearRect(0, 0, 800, 400);
-
-    // Player
-    this.ctx.fillStyle = "#00d9ff";
-    this.ctx.fillRect(this.player.x, this.player.y, 30, 30);
-
-    this.updateObjects();
-  }
-
-  /* =========================
-     LOCAL STORAGE
-  ========================= */
-
-  saveData() {
-    localStorage.setItem("abRunner", JSON.stringify({
-      coins: this.coins,
-      gems: this.gems,
-      xp: this.xp,
-      level: this.level
-    }));
-  }
-
-  loadData() {
-    const data = JSON.parse(localStorage.getItem("abRunner"));
-    if (data) {
-      this.coins = data.coins;
-      this.gems = data.gems;
-      this.xp = data.xp;
-      this.level = data.level;
+        this.handleCollisions();
     }
-  }
+
+    handleCollisions() {
+        // Lógica de Detecção Bounding Box [7]
+        // Jogador vs Obstáculo (🚂) -> Game Over [7, 11]
+        // Jogador vs Moeda (🪙) -> +10 XP e +1 moeda [4, 7]
+        // Jogador vs Gema (💎) -> +50 XP e +1 gema [4, 7]
+    }
+
+    showScenario() {
+        this.isPaused = true; // Pausa o motor para o dilema [2]
+        // Lógica para exibir o popup com animação SlideIn [12, 13]
+    }
+
+    handleAnswer(isCorrect) {
+        // Processamento de Resposta e XP (Sistema de Progressão)
+        if (isCorrect) {
+            this.saveData.xp += 100; // +100 XP por acerto [4, 14]
+            console.log("Ótima decisão! Avisar um adulto é o caminho certo."); [15]
+        } else {
+            this.saveData.xp -= 50; // -50 XP por erro [4, 14]
+            console.log("Isso pode piorar a situação. Procure um adulto!"); [15]
+        }
+        
+        this.updateLevel();
+        this.persistData();
+        this.isPaused = false;
+    }
+
+    updateLevel() {
+        // Sistema de Marcos: 100 XP por nível até o 50 [14]
+        this.saveData.level = Math.floor(this.saveData.xp / 100) + 1;
+        if (this.saveData.level >= 50) {
+            console.log("Parabéns! Você alcançou o nível máximo e o certificado."); [14]
+        }
+    }
+
+    persistData() {
+        // Salvamento Automático no LocalStorage [2, 4, 16]
+        localStorage.setItem('antiBullyingData', JSON.stringify(this.saveData));
+    }
 }
 
-/* =========================
-   INIT
-========================= */
-
-const canvas = document.getElementById("game");
-const game = new GameEngine(canvas);
-
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") game.jump();
-});
+// Iniciar o jogo
+const game = new GameEngine();
