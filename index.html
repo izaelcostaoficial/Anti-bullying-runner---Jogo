@@ -1,283 +1,273 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Anti-Bullying Runner 🛡️</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Anti-Bullying Runner 🛡️</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="theme-dark">
+<body>
 
-<!-- CANVAS -->
-<canvas id="gameCanvas"></canvas>
+<div id="game-container">
 
-<!-- OVERLAYS -->
-<div id="shieldIndicator">🛡️</div>
-<div id="maxLvlBadge"></div>
-<div id="floatNotif"></div>
-<div id="recordNotif">🏆 NOVO RECORDE!</div>
-<div id="lifeLostFlash"></div>
-<div class="confetti-wrap" id="confettiWrap"></div>
-<button id="musicToggle" title="Música">🎵</button>
-
-<!-- HUD -->
-<div id="hud">
-  <div class="hud-grp">
-    <div class="hud-item">🏃 <span id="hudScore">0</span></div>
-    <div class="hud-item">🪙 <span id="hudCoins">0</span></div>
-    <div class="hud-item">💎 <span id="hudGems">0</span></div>
-  </div>
-  <div class="hud-grp">
-    <div class="hud-item" id="hudShield" style="display:none">🛡️ ESCUDO</div>
-    <div class="hud-item" id="hudLives">❤️❤️❤️</div>
-    <div class="hud-item" id="hudDist">0m</div>
-  </div>
-</div>
-
-<!-- POWER BAR -->
-<div id="powerBar">
-  <span id="powerBarHint">PODERES</span>
-  <div class="power-slot" onclick="activatePower(0)">
-    <div class="power-icon" id="picon0">🛡️<div class="power-cd" id="pcd0" style="display:none"></div></div>
-    <div class="power-label" id="plbl0">Escudo</div>
-    <div class="power-key">[SPC]</div>
-  </div>
-  <div class="power-slot" onclick="activatePower(1)">
-    <div class="power-icon" id="picon1">⚡<div class="power-cd" id="pcd1" style="display:none"></div></div>
-    <div class="power-label" id="plbl1">Velocidade</div>
-    <div class="power-key">[Q]</div>
-  </div>
-  <div class="power-slot" onclick="activatePower(2)">
-    <div class="power-icon" id="picon2">🧲<div class="power-cd" id="pcd2" style="display:none"></div></div>
-    <div class="power-label" id="plbl2">Ímã</div>
-    <div class="power-key">[E]</div>
-  </div>
-  <div class="power-slot" onclick="activatePower(3)">
-    <div class="power-icon" id="picon3">🌀<div class="power-cd" id="pcd3" style="display:none"></div></div>
-    <div class="power-label" id="plbl3">Lentidão</div>
-    <div class="power-key">[R]</div>
-  </div>
-</div>
-
-<!-- MOBILE HINT -->
-<div id="mobileHint">
-  <div class="mhint">← deslize</div>
-  <div class="mhint">deslize →</div>
-</div>
-
-<!-- SPLASH -->
-<div id="splash">
-  <div class="logo">🛡️</div>
-  <h1 id="splashTitle">Anti-Bullying Runner</h1>
-  <p id="splashSub">CARREGANDO...</p>
-  <div id="splashBar"><div id="splashFill"></div></div>
-  <div id="splashPct">0%</div>
-</div>
-
-<!-- DILEMA MODAL -->
-<div id="dilemaModal">
-  <div class="dcard">
-    <div class="dilema-header">
-      <div class="dilema-tag-row">
-        <span id="dilemaIcon" style="font-size:1.6rem">🎓</span>
-        <span id="dilemaTag" style="font-size:.72rem;font-weight:800;color:var(--subtext);text-transform:uppercase;letter-spacing:1px">DILEMA</span>
+  <!-- ═══════════════════════════════════ LOADING SCREEN ═══════════════════════════════════ -->
+  <div id="loading-screen">
+    <div class="loading-logo">🛡️</div>
+    <h1 class="loading-title">Anti-Bullying Runner</h1>
+    <p class="loading-sub">Desenvolvido por Izael &amp; Felipe</p>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-track">
+        <div id="loading-bar-fill"></div>
       </div>
-      <div class="dilema-lives" id="dilemaLives">❤️❤️❤️</div>
+      <span id="loading-percent">0%</span>
     </div>
-    <div class="dilema-q" id="dilemaQ"></div>
-    <div class="dilema-opts" id="dilemaOpts"></div>
-    <div class="dilema-result" id="dilemaResult"></div>
-    <div class="dilema-timer"><div class="dilema-timer-fill" id="dilemaTimerFill"></div></div>
+    <p class="loading-tip" id="loading-tip">Carregando mundos...</p>
   </div>
-</div>
 
-<!-- PERFECT SCREEN -->
-<div id="perfectScreen">
-  <div class="perfect-card">
-    <span class="perfect-star">⭐</span>
-    <div class="perfect-title" id="perfectTitle">PERFEITO!</div>
-    <div class="perfect-subtitle" id="perfectSubtitle"></div>
-    <div class="perfect-stats">
-      <div class="perfect-stat"><div class="pv" id="pScore">0</div><div class="pk" id="pScoreKey">PONTOS</div></div>
-      <div class="perfect-stat"><div class="pv" id="pDist">0m</div><div class="pk" id="pDistKey">DISTÂNCIA</div></div>
-      <div class="perfect-stat"><div class="pv" id="pXP">+0</div><div class="pk" id="pXPKey">XP BÔNUS</div></div>
-      <div class="perfect-stat"><div class="pv" id="pCoins">+0</div><div class="pk" id="pCoinsKey">MOEDAS BÔNUS</div></div>
-    </div>
-    <button class="btn full" id="perfectContinueBtn" style="background:#16a34a;margin-top:.5rem">🏃 CONTINUAR</button>
-    <button class="btn full outline" id="perfectMenuBtn" style="border-color:#22c55e;color:#4ade80;margin-top:.4rem">🏠 <span id="perfectMenuLbl">Menu Principal</span></button>
-  </div>
-</div>
-
-<!-- MENU -->
-<div class="screen active" id="menuScreen">
-  <div class="card">
-    <div style="text-align:center;margin-bottom:.5rem">
-      <span style="font-size:2.5rem;display:block;animation:logoPulse 2s ease infinite">🛡️</span>
-    </div>
-    <h2 id="menuTitle">Anti-Bullying Runner</h2>
-
-    <div id="cloudBadge" class="cloud-badge" style="display:none">
-      <span>☁️</span><span id="cloudBadgeText"></span>
-    </div>
-
-    <div class="profile-row">
-      <button id="avatarBtn" title="Trocar avatar"></button>
-      <div class="name-col">
-        <label class="lbl" id="lblName" for="nameInp">SEU NOME</label>
-        <input class="inp" id="nameInp" type="text" maxlength="20" placeholder="Digite seu nome...">
-      </div>
-    </div>
-
-    <div class="xp-bar-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
-        <span class="lbl" id="lblXP">XP</span>
-        <span id="xpLvlLabel" style="font-size:.72rem;color:var(--subtext);font-weight:800"></span>
-      </div>
-      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
-      <div class="xp-info"><span id="xpCurrent">0</span><span id="xpMax">5000</span></div>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-box"><div class="val" id="statBest">0</div><div class="key" id="statBestKey">RECORDE</div></div>
-      <div class="stat-box"><div class="val" id="statCoins">0</div><div class="key" id="statCoinsKey">MOEDAS</div></div>
-      <div class="stat-box"><div class="val" id="statGames">0</div><div class="key" id="statGamesKey">CORRIDAS</div></div>
-    </div>
-    <div style="display:flex;gap:.5rem;margin:.3rem 0">
-      <div class="stat-box" style="flex:1"><div class="val" style="color:#60a5fa" id="statGems">0</div><div class="key">GEMAS</div></div>
-      <div class="stat-box" style="flex:1"><div class="val" style="color:#22c55e" id="statPowers">0</div><div class="key">PODERES</div></div>
-    </div>
-
-    <div style="margin:.5rem 0">
-      <div class="lbl" id="lblTheme" style="margin-bottom:.3rem">TEMA</div>
-      <div class="row-btns">
-        <button class="theme-btn active" data-theme="dark" id="themeD">🌙 Escuro</button>
-        <button class="theme-btn" data-theme="light" id="themeL">☀️ Claro</button>
-        <button class="theme-btn" data-theme="bw" id="themeBW">◑ P&amp;B</button>
-      </div>
-    </div>
-    <div style="margin:.5rem 0">
-      <div class="lbl" id="lblLang" style="margin-bottom:.3rem">IDIOMA</div>
-      <div class="row-btns">
-        <button class="lang-btn active" data-lang="pt" id="langPT">🇧🇷 PT</button>
-        <button class="lang-btn" data-lang="en" id="langEN">🇺🇸 EN</button>
-        <button class="lang-btn" data-lang="es" id="langES">🇪🇸 ES</button>
-      </div>
-    </div>
-
-    <div class="menu-grid">
-      <button class="btn" id="playBtn" style="grid-column:1/-1">🏃 JOGAR</button>
-      <button class="btn outline" id="topRunBtn">🏆 TOP RUN</button>
-      <button class="btn outline" id="shopBtn">🛒 LOJA</button>
-      <button class="btn outline" id="loginBtn" style="grid-column:1/-1">☁️ <span id="loginBtnLbl">Conta &amp; Nuvem</span></button>
-    </div>
-  </div>
-</div>
-
-<!-- SHOP -->
-<div class="screen" id="shopScreen">
-  <div class="card">
-    <h2 id="shopTitle">🛒 Loja</h2>
-    <div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:.8rem">
-      <span style="font-size:.85rem;color:var(--subtext)">🪙 <span style="font-weight:900;color:#fbbf24" id="shopCoins">0</span></span>
-      <span style="font-size:.85rem;color:var(--subtext)">💎 <span style="font-weight:900;color:#60a5fa" id="shopGems">0</span></span>
-    </div>
-    <div class="shop-grid" id="shopGrid"></div>
-    <button class="btn full outline" id="shopBackBtn" style="margin-top:.8rem">← <span id="shopBackLbl">Voltar</span></button>
-  </div>
-</div>
-
-<!-- TOP RUN -->
-<div class="screen" id="topRunScreen">
-  <div class="card">
-    <h2>🏆 <span id="topRunTitle">Top Run</span></h2>
-    <div class="tab-row">
-      <button class="tab-btn active" id="tabLocal" onclick="showTopTab('local')">📱 Local</button>
-      <button class="tab-btn" id="tabGlobal" onclick="showTopTab('global')">🌍 Global</button>
-    </div>
-    <div class="top-list" id="topList"></div>
-    <button class="btn full outline" id="topBackBtn" style="margin-top:.8rem">← <span id="topBackLbl">Voltar</span></button>
-  </div>
-</div>
-
-<!-- LOGIN / ACCOUNT -->
-<div class="screen" id="loginScreen">
-  <div class="card">
-    <h2>☁️ <span id="loginTitle">Conta &amp; Nuvem</span></h2>
-
-    <!-- Logged in panel -->
-    <div id="loggedPanel" style="display:none">
-      <div class="logged-user">
-        <div class="logged-avatar" id="loggedAvatar">🧒</div>
-        <div class="logged-info">
-          <div class="logged-name"  id="loggedName">-</div>
-          <div class="logged-email" id="loggedEmail">-</div>
+  <!-- ═══════════════════════════════════ MENU SCREEN ═══════════════════════════════════ -->
+  <div id="menu-screen" class="hidden">
+    <!-- Top bar -->
+    <div class="menu-topbar">
+      <div class="menu-profile-area">
+        <button id="btn-avatar" class="avatar-btn" title="Trocar Avatar">
+          <span id="menu-avatar">🧑</span>
+        </button>
+        <div class="menu-profile-info">
+          <div id="menu-player-name" class="player-name-display" title="Clique para editar">Jogador</div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-track"><div id="menu-xp-fill" class="xp-bar-fill"></div></div>
+            <span id="menu-xp-label" class="xp-label">XP 0 / 100 · Nv 1</span>
+          </div>
         </div>
-        <span style="font-size:1.3rem;color:#22c55e">✅</span>
+        <button id="btn-edit-name" class="icon-btn" title="Editar Nome">✏️</button>
       </div>
-      <div style="margin:.6rem 0;padding:.6rem;background:var(--input-bg);border-radius:10px;border:1px solid var(--card-border);font-size:.82rem;color:var(--subtext)">
-        ☁️ <span id="cloudSyncInfo">Progresso sincronizado automaticamente.</span>
-      </div>
-      <button class="btn full" id="syncNowBtn" style="margin-top:.3rem">🔄 <span id="syncNowLbl">Sincronizar Agora</span></button>
-      <button class="btn full outline" id="logoutBtn" style="margin-top:.4rem">🚪 <span id="logoutLbl">Sair da Conta</span></button>
-    </div>
-
-    <!-- Auth panel -->
-    <div id="authPanel">
-      <div class="tab-row" style="margin-bottom:.8rem">
-        <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">🔑 Entrar</button>
-        <button class="tab-btn" id="tabRegister" onclick="switchAuthTab('register')">✨ Criar Conta</button>
-      </div>
-      <div id="authError" class="auth-error"></div>
-      <div id="authSuccess" class="auth-success"></div>
-      <div class="login-form">
-        <div>
-          <div class="login-label" id="lblEmail">EMAIL</div>
-          <input class="inp" id="authEmail" type="email" placeholder="seu@email.com">
-        </div>
-        <div>
-          <div class="login-label" id="lblPassword">SENHA</div>
-          <input class="inp" id="authPassword" type="password" placeholder="••••••••">
-        </div>
-        <div id="registerNameField" style="display:none">
-          <div class="login-label" id="lblRegName">NOME NO JOGO</div>
-          <input class="inp" id="authName" type="text" maxlength="20" placeholder="Seu nome...">
-        </div>
-        <button class="btn full" id="authSubmitBtn">🔑 Entrar</button>
-        <div style="font-size:.72rem;color:var(--subtext);text-align:center;margin-top:.3rem" id="authFootnote">Dados salvos localmente + nuvem (simulada).</div>
+      <div class="menu-topbar-right">
+        <span class="currency-chip">🪙 <span id="menu-coins">0</span></span>
+        <span class="currency-chip gem">💎 <span id="menu-gems">0</span></span>
+        <button id="btn-settings" class="icon-btn">⚙️</button>
       </div>
     </div>
 
-    <button class="btn full outline" id="loginBackBtn" style="margin-top:.8rem">← <span id="loginBackLbl">Voltar</span></button>
+    <!-- Hero -->
+    <div class="menu-hero">
+      <div class="menu-title-block">
+        <div class="menu-logo-big">🛡️</div>
+        <h1 class="menu-game-title">Anti-Bullying<br/><span class="accent">Runner</span></h1>
+        <p class="menu-tagline">Corra. Aprenda. Proteja.</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="menu-actions">
+      <button id="btn-play" class="btn-primary">▶ JOGAR</button>
+      <div class="menu-secondary-btns">
+        <button id="btn-shop" class="btn-secondary">🛒 Loja</button>
+        <button id="btn-ranking" class="btn-secondary">🏆 Ranking</button>
+        <button id="btn-challenges" class="btn-secondary">🎯 Desafios</button>
+      </div>
+    </div>
+
+    <!-- Daily Challenge Mini -->
+    <div class="daily-mini" id="daily-mini">
+      <span class="daily-mini-icon">🎯</span>
+      <div class="daily-mini-text">
+        <b>Desafio Diário:</b> <span id="daily-desc">Colete 50 moedas hoje!</span>
+      </div>
+      <div class="daily-mini-progress">
+        <div id="daily-progress-fill" style="width:0%"></div>
+      </div>
+    </div>
   </div>
-</div>
 
-<!-- GAME OVER -->
-<div class="screen" id="gameOverScreen">
-  <div class="card">
-    <div style="text-align:center;font-size:2.8rem;margin-bottom:.3rem">💀</div>
-    <h2 id="goTitle">GAME OVER</h2>
-    <div id="newRecordBadge"></div>
-    <div class="go-stats">
-      <div class="go-stat"><div class="gv" id="goScore">0</div><div class="gk" id="goScoreKey">PONTOS</div></div>
-      <div class="go-stat"><div class="gv" id="goDist">0m</div><div class="gk"  id="goDistKey">DISTÂNCIA</div></div>
-      <div class="go-stat"><div class="gv" id="goCoins">0</div><div class="gk"  id="goCoinsKey">MOEDAS</div></div>
-      <div class="go-stat"><div class="gv" id="goGems">0</div><div class="gk"   id="goGemsKey">GEMAS</div></div>
+  <!-- ═══════════════════════════════════ GAME CANVAS ═══════════════════════════════════ -->
+  <canvas id="gameCanvas" class="hidden"></canvas>
+
+  <!-- ═══════════════════════════════════ HUD LAYER ═══════════════════════════════════ -->
+  <div id="hud-layer" class="hidden">
+    <div class="hud-top">
+      <button id="btn-pause" class="hud-btn">⏸</button>
+      <div class="hud-stats">
+        <span class="hud-chip">🏅 <span id="hud-score">0</span></span>
+        <span class="hud-chip">🪙 <span id="hud-coins">0</span></span>
+        <span class="hud-chip">💎 <span id="hud-gems">0</span></span>
+        <span class="hud-chip">📍 <span id="hud-km">0.00</span> km</span>
+      </div>
+      <div class="hud-right">
+        <span class="hud-chip">✨ x<span id="hud-multi">1</span></span>
+        <span id="hud-shield-icon" class="hud-chip hidden">🛡️</span>
+      </div>
     </div>
-    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border)">
-      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px" id="goXpLabel">XP GANHO</div>
-      <div style="font-size:1.5rem;font-weight:900;color:var(--accent)" id="goXp">+0</div>
-    </div>
-    <div style="margin:.5rem 0;padding:.65rem;background:var(--input-bg);border-radius:12px;border:1px solid var(--card-border)">
-      <div style="font-size:.72rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px" id="goQLabel">PERGUNTAS</div>
-      <div id="goQStats" style="font-size:.95rem;font-weight:700;color:var(--text);margin-top:.2rem"></div>
-    </div>
-    <button class="btn full" id="replayBtn">🔄 <span id="replayLbl">Jogar Novamente</span></button>
-    <button class="btn full outline" id="goMenuBtn" style="margin-top:.4rem">🏠 <span id="goMenuLbl">Menu Principal</span></button>
+    <div class="hud-powerups" id="hud-powerups"></div>
   </div>
-</div>
 
-<script src="game.js"></script>
+  <!-- ═══════════════════════════════════ SCENARIO POPUP ═══════════════════════════════════ -->
+  <div id="scenario-popup" class="hidden">
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span id="sc-badge" class="sc-badge">Dilema</span>
+        <span id="sc-icon" class="sc-title-icon">🤔</span>
+      </div>
+      <h2 id="sc-title" class="sc-title">Título do Cenário</h2>
+      <p id="sc-desc" class="sc-desc">Descrição da situação de bullying...</p>
+      <p class="sc-question-label">O que você faria?</p>
+      <div id="sc-options" class="sc-options"></div>
+      <div id="sc-feedback" class="sc-feedback hidden">
+        <span id="sc-feedback-icon">✅</span>
+        <p id="sc-feedback-text">Ótima escolha!</p>
+        <button id="btn-sc-continue" class="btn-primary btn-sm">Continuar Correndo →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAUSE SCREEN ═══════════════════════════════════ -->
+  <div id="pause-screen" class="hidden overlay-screen">
+    <div class="overlay-card">
+      <h2>⏸ Pausado</h2>
+      <div class="pause-stats">
+        <div class="stat-row"><span>Pontuação</span><b id="pause-score">0</b></div>
+        <div class="stat-row"><span>Moedas</span><b id="pause-coins">0</b></div>
+        <div class="stat-row"><span>Distância</span><b id="pause-km">0.00 km</b></div>
+      </div>
+      <div class="overlay-btns">
+        <button id="btn-resume" class="btn-primary">▶ Continuar</button>
+        <button id="btn-restart" class="btn-secondary">🔄 Recomeçar</button>
+        <button id="btn-to-menu" class="btn-secondary">🏠 Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ GAME OVER SCREEN ═══════════════════════════════════ -->
+  <div id="gameover-screen" class="hidden overlay-screen">
+    <div class="overlay-card">
+      <div class="go-emoji" id="go-emoji">💥</div>
+      <h2 id="go-title">Fim de Jogo!</h2>
+      <p id="go-msg">Continue praticando!</p>
+      <div class="go-stats">
+        <div class="stat-row"><span>Pontuação</span><b id="go-score">0</b></div>
+        <div class="stat-row"><span>Recorde</span><b id="go-best">0</b></div>
+        <div class="stat-row"><span>Moedas</span><b id="go-coins">0</b></div>
+        <div class="stat-row"><span>XP Ganho</span><b id="go-xp">+0</b></div>
+        <div class="stat-row"><span>Distância</span><b id="go-km">0.00 km</b></div>
+      </div>
+      <div class="overlay-btns">
+        <button id="btn-play-again" class="btn-primary">▶ Jogar Novamente</button>
+        <button id="btn-go-menu" class="btn-secondary">🏠 Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ RANKING SCREEN ═══════════════════════════════════ -->
+  <div id="ranking-screen" class="hidden overlay-screen">
+    <div class="overlay-card wide">
+      <h2>🏆 Top Runners</h2>
+      <ul id="ranking-list" class="ranking-list"></ul>
+      <button class="btn-secondary" data-close="ranking-screen">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ SHOP SCREEN ═══════════════════════════════════ -->
+  <div id="shop-screen" class="hidden overlay-screen">
+    <div class="overlay-card wide">
+      <h2>🛒 Loja</h2>
+      <div class="shop-currency">
+        <span class="currency-chip">🪙 <span id="shop-coins">0</span></span>
+        <span class="currency-chip gem">💎 <span id="shop-gems">0</span></span>
+      </div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="powerups">Power-ups</button>
+        <button class="shop-tab" data-tab="boards">Veículos</button>
+        <button class="shop-tab" data-tab="outfits">Roupas</button>
+      </div>
+      <div id="shop-items" class="shop-items"></div>
+      <button class="btn-secondary" data-close="shop-screen">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ CHALLENGES SCREEN ═══════════════════════════════════ -->
+  <div id="challenges-screen" class="hidden overlay-screen">
+    <div class="overlay-card wide">
+      <h2>🎯 Desafios Diários</h2>
+      <div id="challenges-list" class="challenges-list"></div>
+      <button class="btn-secondary" data-close="challenges-screen">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ SETTINGS SCREEN ═══════════════════════════════════ -->
+  <div id="settings-screen" class="hidden overlay-screen">
+    <div class="overlay-card">
+      <h2>⚙️ Configurações</h2>
+      <div class="settings-section">
+        <label class="settings-label">Idioma</label>
+        <div class="settings-row">
+          <button class="lang-btn active" data-lang="pt">🇧🇷 PT</button>
+          <button class="lang-btn" data-lang="en">🇺🇸 EN</button>
+          <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">Tema</label>
+        <div class="settings-row">
+          <button class="theme-btn active" data-theme="dark">🌑 Escuro</button>
+          <button class="theme-btn" data-theme="light">☀️ Claro</button>
+          <button class="theme-btn" data-theme="bw">⬛ P&amp;B</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">🎵 Música <span id="music-vol-label">80%</span></label>
+        <input type="range" id="music-vol" class="vol-slider" min="0" max="100" value="80" />
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">🔊 SFX <span id="sfx-vol-label">80%</span></label>
+        <input type="range" id="sfx-vol" class="vol-slider" min="0" max="100" value="80" />
+      </div>
+      <button class="btn-secondary" data-close="settings-screen">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ AVATAR PICKER ═══════════════════════════════════ -->
+  <div id="avatar-screen" class="hidden overlay-screen">
+    <div class="overlay-card">
+      <h2>🎨 Escolha seu Avatar</h2>
+      <div id="avatar-grid" class="avatar-grid"></div>
+      <button class="btn-secondary" data-close="avatar-screen">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ NAME EDIT MODAL ═══════════════════════════════════ -->
+  <div id="name-modal" class="hidden overlay-screen">
+    <div class="overlay-card compact">
+      <h2>✏️ Seu Nome</h2>
+      <input type="text" id="name-input" class="name-input" maxlength="20" placeholder="Digite seu nome..." />
+      <div class="overlay-btns">
+        <button id="btn-save-name" class="btn-primary">💾 Salvar</button>
+        <button class="btn-secondary" data-close="name-modal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ LEVEL UP TOAST ═══════════════════════════════════ -->
+  <div id="levelup-toast" class="hidden toast-pop">
+    <span class="toast-icon">🎉</span>
+    <div class="toast-text">
+      <b>LEVEL UP!</b>
+      <span id="toast-level">Nível 2</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ CERTIFICATE SCREEN ═══════════════════════════════════ -->
+  <div id="cert-screen" class="hidden overlay-screen">
+    <div class="overlay-card wide cert-card">
+      <div class="cert-header">🛡️ Certificado de Conclusão 🛡️</div>
+      <p class="cert-body">Este certificado reconhece que</p>
+      <h2 id="cert-name" class="cert-name">Jogador</h2>
+      <p class="cert-body">completou o <b>Anti-Bullying Runner</b> atingindo o <b>Nível 50</b>, demonstrando conhecimento sobre prevenção ao bullying escolar.</p>
+      <div class="cert-footer">Izael &amp; Felipe · Anti-Bullying Runner</div>
+      <button class="btn-primary" data-close="cert-screen">🏠 Menu</button>
+    </div>
+  </div>
+
+</div><!-- /game-container -->
+
+<script src="script.js"></script>
 </body>
 </html>
