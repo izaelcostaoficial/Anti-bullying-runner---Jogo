@@ -1,126 +1,247 @@
-/**
- * ANTI-BULLYING RUNNER - Motor do Jogo
- * Desenvolvido por: Izael e Felipe
- */
+/* =========================
+   ANTI-BULLYING RUNNER
+   GAME ENGINE
+========================= */
 
 class GameEngine {
-    constructor() {
-        // Inicialização de Dados (Baseado no Sistema de Salvamento)
-        this.saveData = JSON.parse(localStorage.getItem('antiBullyingData')) || {
-            playerName: "Jogador",
-            playerAvatar: "🏃",
-            level: 1,
-            xp: 0,
-            coins: 1000,
-            gems: 50,
-            totalScore: 0,
-            gamesPlayed: 0,
-            language: "pt",
-            theme: "dark",
-            audioEnabled: true
-        }; [4, 5]
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
 
-        // Constantes de Física (Especificações Técnicas)
-        this.gravity = 0.6; 
-        this.initialVelocity = 5;
-        this.jumpForce = -12; [3]
-        this.fps = 60; [1, 3]
-        
-        // Estado do Jogo
-        this.isPaused = false;
-        this.currentScenario = null;
-        this.player = {
-            y: 0,
-            velocityY: 0,
-            isJumping: false,
-            lane: 1 // 0: Esquerda, 1: Centro, 2: Direita [6]
-        };
+    /* Física */
+    this.gravity = 0.6;
+    this.velocity = 5;
+    this.jumpForce = -12;
 
-        // Cenários de Bullying (Documentação Detalhada)
-        this.scenarios = [
-            {
-                icon: "🎒",
-                title: "Roubo de Pertences",
-                description: "Alguém está tendo seus pertences roubados. O que fazer?",
-                options: [
-                    { text: "Avisar um professor", correct: true },
-                    { text: "Tentar resolver sozinho", correct: false },
-                    { text: "Deixar acontecer", correct: false }
-                ]
-            }, [7, 8]
-            // ... Inclui os outros 5 cenários: Fofoca, Exclusão, Cyberbullying, Agressão e Pressão [8-10]
-        ];
+    /* Player */
+    this.player = {
+      x: 50,
+      y: 300,
+      vy: 0
+    };
 
-        this.init();
+    /* Game State */
+    this.objects = [];
+    this.coins = 0;
+    this.gems = 0;
+    this.xp = 0;
+    this.level = 1;
+    this.distance = 0;
+
+    this.running = true;
+
+    this.loadData();
+    this.loop();
+  }
+
+  /* =========================
+     LOOP 60 FPS
+  ========================= */
+  loop() {
+    if (!this.running) return;
+
+    this.update();
+    this.render();
+
+    requestAnimationFrame(() => this.loop());
+  }
+
+  update() {
+    this.applyPhysics();
+    this.spawnLogic();
+
+    this.distance += this.velocity;
+
+    this.checkLevel();
+    this.updateHUD();
+  }
+
+  /* =========================
+     FÍSICA
+  ========================= */
+  applyPhysics() {
+    this.player.vy += this.gravity;
+    this.player.y += this.player.vy;
+
+    if (this.player.y >= 300) {
+      this.player.y = 300;
+      this.player.vy = 0;
+    }
+  }
+
+  jump() {
+    if (this.player.y >= 300) {
+      this.player.vy = this.jumpForce;
+    }
+  }
+
+  /* =========================
+     OBJETOS
+  ========================= */
+  spawnLogic() {
+    if (Math.random() < 0.02) {
+      const types = ["train", "coin", "gem"];
+      const type = types[Math.floor(Math.random() * types.length)];
+
+      this.objects.push({
+        type,
+        x: 800,
+        y: 300
+      });
     }
 
-    init() {
-        // Configuração do Canvas e Contexto [2]
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        this.loadListeners();
+    this.updateObjects();
+  }
+
+  updateObjects() {
+    this.objects.forEach(obj => {
+      obj.x -= this.velocity;
+
+      if (this.collision(obj)) {
+        if (obj.type === "train") this.gameOver();
+        if (obj.type === "coin") this.addCoin();
+        if (obj.type === "gem") this.addGem();
+      }
+    });
+
+    this.objects = this.objects.filter(o => o.x > -50);
+  }
+
+  collision(obj) {
+    return (
+      obj.x < this.player.x + 30 &&
+      obj.x + 30 > this.player.x &&
+      obj.y === this.player.y
+    );
+  }
+
+  /* =========================
+     XP / RECOMPENSAS
+  ========================= */
+
+  addCoin() {
+    this.coins++;
+    this.xp += 10;
+  }
+
+  addGem() {
+    this.gems++;
+    this.xp += 50;
+  }
+
+  checkLevel() {
+    const newLevel = Math.floor(this.xp / 100) + 1;
+
+    if (newLevel !== this.level && newLevel <= 50) {
+      this.level = newLevel;
     }
+  }
 
-    update() {
-        if (this.isPaused) return; [2]
+  /* =========================
+     SCENÁRIOS EDUCATIVOS
+  ========================= */
 
-        // Aplicar Gravidade e Movimento (Cálculos do Sistema de Física)
-        this.player.velocityY += this.gravity;
-        this.player.y += this.player.velocityY; [3]
+  showScenario(type) {
+    this.running = false;
 
-        // Colisão com o Ground
-        const groundY = this.canvas.height * 0.8;
-        if (this.player.y >= groundY) {
-            this.player.y = groundY;
-            this.player.velocityY = 0;
-            this.player.isJumping = false;
-        } [3]
+    const scenarios = {
+      roubo: "Alguém pegou seu material sem permissão.",
+      fofoca: "Estão espalhando rumores sobre você.",
+      exclusao: "Você foi excluído de um grupo.",
+      cyberbullying: "Mensagens ofensivas aparecem online.",
+      agressao: "Você presencia violência física.",
+      pressao: "Você está sofrendo pressão de grupo."
+    };
 
-        this.handleCollisions();
+    alert(scenarios[type] || "Situação não encontrada");
+
+    setTimeout(() => {
+      this.running = true;
+      this.loop();
+    }, 1500);
+  }
+
+  /* =========================
+     GAME OVER
+  ========================= */
+
+  gameOver() {
+    this.running = false;
+
+    this.saveData();
+    alert("Game Over!");
+
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+  }
+
+  /* =========================
+     RENDER
+  ========================= */
+
+  render() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    /* Player */
+    this.ctx.fillStyle = "#00d9ff";
+    this.ctx.fillRect(this.player.x, this.player.y, 30, 30);
+
+    /* Objects */
+    this.objects.forEach(obj => {
+      if (obj.type === "train") this.ctx.fillStyle = "#ff006e";
+      if (obj.type === "coin") this.ctx.fillStyle = "#00ff88";
+      if (obj.type === "gem") this.ctx.fillStyle = "#00d9ff";
+
+      this.ctx.fillRect(obj.x, obj.y, 25, 25);
+    });
+  }
+
+  /* =========================
+     HUD
+  ========================= */
+
+  updateHUD() {
+    document.getElementById("coins").innerText = this.coins;
+    document.getElementById("gems").innerText = this.gems;
+    document.getElementById("xp").innerText = this.xp;
+    document.getElementById("level").innerText = this.level;
+    document.getElementById("distance").innerText = Math.floor(this.distance);
+  }
+
+  /* =========================
+     LOCAL STORAGE
+  ========================= */
+
+  saveData() {
+    localStorage.setItem("abRunner", JSON.stringify({
+      coins: this.coins,
+      gems: this.gems,
+      xp: this.xp,
+      level: this.level
+    }));
+  }
+
+  loadData() {
+    const data = JSON.parse(localStorage.getItem("abRunner"));
+
+    if (data) {
+      this.coins = data.coins || 0;
+      this.gems = data.gems || 0;
+      this.xp = data.xp || 0;
+      this.level = data.level || 1;
     }
-
-    handleCollisions() {
-        // Lógica de Detecção Bounding Box [7]
-        // Jogador vs Obstáculo (🚂) -> Game Over [7, 11]
-        // Jogador vs Moeda (🪙) -> +10 XP e +1 moeda [4, 7]
-        // Jogador vs Gema (💎) -> +50 XP e +1 gema [4, 7]
-    }
-
-    showScenario() {
-        this.isPaused = true; // Pausa o motor para o dilema [2]
-        // Lógica para exibir o popup com animação SlideIn [12, 13]
-    }
-
-    handleAnswer(isCorrect) {
-        // Processamento de Resposta e XP (Sistema de Progressão)
-        if (isCorrect) {
-            this.saveData.xp += 100; // +100 XP por acerto [4, 14]
-            console.log("Ótima decisão! Avisar um adulto é o caminho certo."); [15]
-        } else {
-            this.saveData.xp -= 50; // -50 XP por erro [4, 14]
-            console.log("Isso pode piorar a situação. Procure um adulto!"); [15]
-        }
-        
-        this.updateLevel();
-        this.persistData();
-        this.isPaused = false;
-    }
-
-    updateLevel() {
-        // Sistema de Marcos: 100 XP por nível até o 50 [14]
-        this.saveData.level = Math.floor(this.saveData.xp / 100) + 1;
-        if (this.saveData.level >= 50) {
-            console.log("Parabéns! Você alcançou o nível máximo e o certificado."); [14]
-        }
-    }
-
-    persistData() {
-        // Salvamento Automático no LocalStorage [2, 4, 16]
-        localStorage.setItem('antiBullyingData', JSON.stringify(this.saveData));
-    }
+  }
 }
 
-// Iniciar o jogo
-const game = new GameEngine();
+/* =========================
+   INIT GAME
+========================= */
+
+const canvas = document.getElementById("game");
+const game = new GameEngine(canvas);
+
+/* CONTROLES */
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") game.jump();
+});
