@@ -1,179 +1,112 @@
-/* =========================
-   ANTI-BULLYING RUNNER
-   STYLE.CSS
-========================= */
-
+/* 1. VARIÁVEIS E CORES [1] */
 :root {
-  --roxo-escuro: #5a189a;
-  --azul-escuro: #0f3460;
-  --cyan: #00d9ff;
-  --verde: #00ff88;
-  --magenta: #ff006e;
-  --branco: #ffffff;
-  --cinza: #e0e0e0;
-  --preto: #000000;
-  --font: Arial, Helvetica, sans-serif;
+    --cyan: #00d9ff;      /* Botões, bordas, destaques */
+    --green: #00ff88;     /* Opções corretas, sucesso */
+    --magenta: #ff006e;   /* Acentos, animações */
+    --dark-purple: #5a189a; /* Fundo principal */
+    --dark-blue: #0f3460;  /* Fundo secundário */
+    --black: #000000;
+    --white: #ffffff;
+    --font-main: 'Arial', sans-serif;
 }
 
-/* RESET */
+/* 2. RESET E ESTILOS GLOBAIS [1] */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
 }
 
 body {
-  font-family: var(--font);
-  overflow: hidden;
-  transition: 0.3s ease;
+    background-color: var(--black);
+    color: var(--white);
+    overflow: hidden; /* Mantém a tela fixa para o runner */
+    height: 100vh;
+    width: 100vw;
 }
 
-/* =========================
-   THEMES
-========================= */
-
-.theme-dark {
-  background: linear-gradient(180deg, var(--roxo-escuro), var(--azul-escuro));
-  color: white;
+/* 3. TEMAS [3] */
+body.light-theme {
+    --dark-purple: #f0f0f0;
+    --dark-blue: #ffffff;
+    --white: #000000;
+    --black: #ffffff;
 }
 
-.theme-light {
-  background: linear-gradient(180deg, var(--branco), var(--cinza));
-  color: #111;
+body.bw-theme {
+    filter: grayscale(100%);
 }
 
-.theme-bw {
-  background: #fff;
-  color: #000;
-  filter: grayscale(100%);
+/* 4. TELA DE CARREGAMENTO [1, 2, 4] */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--dark-purple), var(--dark-blue));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
 }
 
-/* =========================
-   GAME CONTAINER
-========================= */
-
-#gameContainer {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.logo-shield {
+    font-size: 80px;
+    animation: pulse 2s infinite, bounce 1s infinite alternate; /* [2] */
 }
 
-/* HUD */
+.loading-bar-container {
+    width: 250px;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.loading-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta)); /* [4] */
+    animation: loadingFill 3.5s forwards; /* [1] */
+}
+
+/* 5. HUD E GAMEPLAY [1, 5] */
 #hud {
-  display: flex;
-  justify-content: space-around;
-  padding: 10px;
-  font-size: 18px;
-  font-weight: bold;
-  background: rgba(0,0,0,0.3);
-  backdrop-filter: blur(10px);
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px; /* [1] */
 }
 
 .hud-item {
-  padding: 5px 10px;
-  border: 2px solid var(--cyan);
-  border-radius: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--cyan);
 }
 
-/* =========================
-   LOGO PULSE
-========================= */
-
-#logo {
-  font-size: 60px;
-  text-align: center;
-  animation: pulse 2s infinite;
+/* 6. CENÁRIOS DE BULLYING (POPUP) [1, 2, 5] */
+.scenario-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    background: var(--dark-blue);
+    border: 3px solid var(--cyan);
+    padding: 20px;
+    border-radius: 15px;
+    animation: slideIn 0.5s ease-out; /* [2] */
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); text-shadow: 0 0 10px var(--cyan); }
-  50% { transform: scale(1.2); text-shadow: 0 0 25px var(--magenta); }
-  100% { transform: scale(1); text-shadow: 0 0 10px var(--cyan); }
-}
-
-/* =========================
-   BOUNCE EFFECT
-========================= */
-
-.bounce {
-  animation: bounce 0.6s ease;
-}
-
-@keyframes bounce {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(-15px); }
-  60% { transform: translateY(5px); }
-  100% { transform: translateY(0); }
-}
-
-/* =========================
-   SLIDE IN POPUPS
-========================= */
-
-.popup {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  padding: 20px;
-  background: rgba(15, 52, 96, 0.8);
-  backdrop-filter: blur(12px);
-  border: 2px solid var(--cyan);
-  border-radius: 12px;
-  animation: slideIn 0.5s ease;
-  color: white;
-}
-
-@keyframes slideIn {
-  from { transform: translate(-50%, -100%); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-/* =========================
-   LOADING BAR
-========================= */
-
-.loading-bar {
-  width: 0%;
-  height: 10px;
-  background: var(--cyan);
-  animation: loading 3.5s linear forwards;
-  border-radius: 10px;
-}
-
-@keyframes loading {
-  0% { width: 0%; background: var(--cyan); }
-  50% { background: var(--verde); }
-  100% { width: 100%; background: var(--magenta); }
-}
-
-/* =========================
-   BUTTONS
-========================= */
-
-button {
-  background: var(--cyan);
-  border: none;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px var(--cyan);
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 768px) {
-  #logo { font-size: 40px; }
-  #hud { flex-direction: column; gap: 5px; }
-}
+.option-btn {
+    display: block;
+    width
