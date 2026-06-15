@@ -1,246 +1,57 @@
-/* =========================
-   ANTI-BULLYING RUNNER
-   STYLE.CSS
-========================= */
-
-/* =========================
-   VARIÁVEIS GLOBAIS
-========================= */
 :root {
-  --roxo-escuro: #5a189a;
-  --azul-escuro: #0f3460;
   --cyan: #00d9ff;
   --verde: #00ff88;
   --magenta: #ff006e;
-  --branco: #ffffff;
-  --cinza: #e0e0e0;
-  --preto: #000000;
-  --font: Arial, Helvetica, sans-serif;
+  --roxo: #5a189a;
+  --azul: #0f3460;
 }
 
-/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: Arial;
 }
-
-/* =========================
-   BODY / BASE
-========================= */
 
 body {
-  font-family: var(--font);
   overflow: hidden;
-  transition: 0.3s ease;
-}
-
-/* =========================
-   THEMES
-========================= */
-
-/* ESCURO (PADRÃO) */
-.theme-dark {
-  background: linear-gradient(180deg, var(--roxo-escuro), var(--azul-escuro));
+  background: linear-gradient(180deg, var(--roxo), var(--azul));
   color: white;
 }
-
-/* CLARO */
-.theme-light {
-  background: linear-gradient(180deg, var(--branco), var(--cinza));
-  color: #111;
-}
-
-/* PRETO & BRANCO (ACESSIBILIDADE) */
-.theme-bw {
-  background: #fff;
-  color: #000;
-  filter: grayscale(100%);
-}
-
-/* =========================
-   GAME CONTAINER
-========================= */
 
 #gameContainer {
   width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: space-between;
 }
 
-/* =========================
-   LOGO PULSANTE
-========================= */
-
 #logo {
-  text-align: center;
-  font-size: 48px;
+  font-size: 32px;
   padding: 10px;
-  animation: pulse 2s infinite;
 }
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    text-shadow: 0 0 10px var(--cyan);
-  }
-  50% {
-    transform: scale(1.2);
-    text-shadow: 0 0 25px var(--magenta);
-  }
-  100% {
-    transform: scale(1);
-    text-shadow: 0 0 10px var(--cyan);
-  }
-}
-
-/* =========================
-   HUD
-========================= */
 
 #hud {
   display: flex;
-  justify-content: space-around;
-  padding: 10px;
-  font-size: 16px;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(10px);
+  gap: 10px;
 }
 
 .hud-item {
-  border: 2px solid var(--cyan);
+  border: 1px solid var(--cyan);
   padding: 5px 10px;
-  border-radius: 8px;
-  min-width: 80px;
-  text-align: center;
 }
-
-/* =========================
-   CANVAS
-========================= */
 
 canvas {
-  display: block;
-  margin: 0 auto;
-  background: rgba(0, 0, 0, 0.2);
   border: 2px solid var(--cyan);
-  border-radius: 10px;
+  background: rgba(0,0,0,0.2);
 }
-
-/* =========================
-   BOTÕES
-========================= */
 
 button {
+  margin: 5px;
+  padding: 10px;
   background: var(--cyan);
   border: none;
-  padding: 10px 15px;
-  margin: 5px;
-  border-radius: 10px;
-  font-weight: bold;
   cursor: pointer;
-  transition: 0.2s ease;
-}
-
-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px var(--cyan);
-}
-
-/* =========================
-   BOUNCE (INTERAÇÕES)
-========================= */
-
-.bounce {
-  animation: bounce 0.5s ease;
-}
-
-@keyframes bounce {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(-12px); }
-  60% { transform: translateY(6px); }
-  100% { transform: translateY(0); }
-}
-
-/* =========================
-   POPUPS (DILEMAS)
-========================= */
-
-.popup {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  padding: 20px;
-  border-radius: 12px;
-
-  background: rgba(15, 52, 96, 0.75);
-  backdrop-filter: blur(15px);
-
-  border: 2px solid var(--cyan);
-  color: white;
-
-  animation: slideIn 0.4s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translate(-50%, -120%);
-    opacity: 0;
-  }
-  to {
-    transform: translate(-50%, 0);
-    opacity: 1;
-  }
-}
-
-/* =========================
-   LOADING BAR
-========================= */
-
-.loading-bar {
-  width: 0%;
-  height: 8px;
-  background: var(--cyan);
-  border-radius: 10px;
-  animation: loading 3.5s linear forwards;
-}
-
-@keyframes loading {
-  0% {
-    width: 0%;
-    background: var(--cyan);
-  }
-  50% {
-    background: var(--verde);
-  }
-  100% {
-    width: 100%;
-    background: var(--magenta);
-  }
-}
-
-/* =========================
-   RESPONSIVO
-========================= */
-
-@media (max-width: 768px) {
-  #logo {
-    font-size: 32px;
-  }
-
-  #hud {
-    flex-direction: column;
-    gap: 5px;
-    font-size: 14px;
-  }
-
-  canvas {
-    width: 95%;
-    height: auto;
-  }
 }
