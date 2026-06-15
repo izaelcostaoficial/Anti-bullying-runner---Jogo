@@ -1,273 +1,125 @@
+
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Anti-Bullying Runner 🛡️</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Bullying Runner 🛡️</title>
+    <!-- Estilos CSS integrados conforme a documentação [9, 10] -->
+    <style>
+        :root {
+            --cyan: #00d9ff;
+            --green: #00ff88;
+            --magenta: #ff006e;
+            --purple: #5a189a;
+            --dark-blue: #0f3460;
+            --white: #ffffff;
+        }
 
-<div id="game-container">
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
 
-  <!-- ═══════════════════════════════════ LOADING SCREEN ═══════════════════════════════════ -->
-  <div id="loading-screen">
-    <div class="loading-logo">🛡️</div>
-    <h1 class="loading-title">Anti-Bullying Runner</h1>
-    <p class="loading-sub">Desenvolvido por Izael &amp; Felipe</p>
-    <div class="loading-bar-wrap">
-      <div class="loading-bar-track">
-        <div id="loading-bar-fill"></div>
-      </div>
-      <span id="loading-percent">0%</span>
-    </div>
-    <p class="loading-tip" id="loading-tip">Carregando mundos...</p>
-  </div>
+        body { 
+            background: linear-gradient(135deg, var(--purple), var(--dark-blue)); 
+            color: var(--white);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-  <!-- ═══════════════════════════════════ MENU SCREEN ═══════════════════════════════════ -->
-  <div id="menu-screen" class="hidden">
-    <!-- Top bar -->
-    <div class="menu-topbar">
-      <div class="menu-profile-area">
-        <button id="btn-avatar" class="avatar-btn" title="Trocar Avatar">
-          <span id="menu-avatar">🧑</span>
-        </button>
-        <div class="menu-profile-info">
-          <div id="menu-player-name" class="player-name-display" title="Clique para editar">Jogador</div>
-          <div class="xp-bar-wrap">
-            <div class="xp-bar-track"><div id="menu-xp-fill" class="xp-bar-fill"></div></div>
-            <span id="menu-xp-label" class="xp-label">XP 0 / 100 · Nv 1</span>
-          </div>
-        </div>
-        <button id="btn-edit-name" class="icon-btn" title="Editar Nome">✏️</button>
-      </div>
-      <div class="menu-topbar-right">
-        <span class="currency-chip">🪙 <span id="menu-coins">0</span></span>
-        <span class="currency-chip gem">💎 <span id="menu-gems">0</span></span>
-        <button id="btn-settings" class="icon-btn">⚙️</button>
-      </div>
-    </div>
+        /* Container Principal do Jogo [9] */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1920px;
+            height: 100%;
+            overflow: hidden;
+        }
 
-    <!-- Hero -->
-    <div class="menu-hero">
-      <div class="menu-title-block">
-        <div class="menu-logo-big">🛡️</div>
-        <h1 class="menu-game-title">Anti-Bullying<br/><span class="accent">Runner</span></h1>
-        <p class="menu-tagline">Corra. Aprenda. Proteja.</p>
-      </div>
-    </div>
+        /* 1. Tela de Carregamento [11, 12] */
+        #loading-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(var(--purple), var(--dark-blue));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
 
-    <!-- Action Buttons -->
-    <div class="menu-actions">
-      <button id="btn-play" class="btn-primary">▶ JOGAR</button>
-      <div class="menu-secondary-btns">
-        <button id="btn-shop" class="btn-secondary">🛒 Loja</button>
-        <button id="btn-ranking" class="btn-secondary">🏆 Ranking</button>
-        <button id="btn-challenges" class="btn-secondary">🎯 Desafios</button>
-      </div>
-    </div>
+        .logo { font-size: 80px; animation: pulse 1.5s infinite; }
+        
+        .progress-container {
+            width: 300px;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
 
-    <!-- Daily Challenge Mini -->
-    <div class="daily-mini" id="daily-mini">
-      <span class="daily-mini-icon">🎯</span>
-      <div class="daily-mini-text">
-        <b>Desafio Diário:</b> <span id="daily-desc">Colete 50 moedas hoje!</span>
-      </div>
-      <div class="daily-mini-progress">
-        <div id="daily-progress-fill" style="width:0%"></div>
-      </div>
-    </div>
-  </div>
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+            transition: width 3.5s linear;
+        }
 
-  <!-- ═══════════════════════════════════ GAME CANVAS ═══════════════════════════════════ -->
-  <canvas id="gameCanvas" class="hidden"></canvas>
+        /* 2. Menu Principal [12, 13] */
+        #menu-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: rgba(15, 52, 96, 0.9);
+        }
 
-  <!-- ═══════════════════════════════════ HUD LAYER ═══════════════════════════════════ -->
-  <div id="hud-layer" class="hidden">
-    <div class="hud-top">
-      <button id="btn-pause" class="hud-btn">⏸</button>
-      <div class="hud-stats">
-        <span class="hud-chip">🏅 <span id="hud-score">0</span></span>
-        <span class="hud-chip">🪙 <span id="hud-coins">0</span></span>
-        <span class="hud-chip">💎 <span id="hud-gems">0</span></span>
-        <span class="hud-chip">📍 <span id="hud-km">0.00</span> km</span>
-      </div>
-      <div class="hud-right">
-        <span class="hud-chip">✨ x<span id="hud-multi">1</span></span>
-        <span id="hud-shield-icon" class="hud-chip hidden">🛡️</span>
-      </div>
-    </div>
-    <div class="hud-powerups" id="hud-powerups"></div>
-  </div>
+        .profile-section { margin-bottom: 30px; }
+        .avatar { font-size: 60px; cursor: pointer; transition: transform 0.2s; }
+        .avatar:hover { transform: scale(1.2) rotate(10deg); }
+        
+        input#player-name {
+            background: transparent;
+            border: 2px solid var(--cyan);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+            text-align: center;
+        }
 
-  <!-- ═══════════════════════════════════ SCENARIO POPUP ═══════════════════════════════════ -->
-  <div id="scenario-popup" class="hidden">
-    <div class="scenario-card">
-      <div class="scenario-header">
-        <span id="sc-badge" class="sc-badge">Dilema</span>
-        <span id="sc-icon" class="sc-title-icon">🤔</span>
-      </div>
-      <h2 id="sc-title" class="sc-title">Título do Cenário</h2>
-      <p id="sc-desc" class="sc-desc">Descrição da situação de bullying...</p>
-      <p class="sc-question-label">O que você faria?</p>
-      <div id="sc-options" class="sc-options"></div>
-      <div id="sc-feedback" class="sc-feedback hidden">
-        <span id="sc-feedback-icon">✅</span>
-        <p id="sc-feedback-text">Ótima escolha!</p>
-        <button id="btn-sc-continue" class="btn-primary btn-sm">Continuar Correndo →</button>
-      </div>
-    </div>
-  </div>
+        .xp-bar-menu {
+            width: 250px;
+            height: 15px;
+            background: #333;
+            border-radius: 10px;
+            margin: 10px auto;
+        }
 
-  <!-- ═══════════════════════════════════ PAUSE SCREEN ═══════════════════════════════════ -->
-  <div id="pause-screen" class="hidden overlay-screen">
-    <div class="overlay-card">
-      <h2>⏸ Pausado</h2>
-      <div class="pause-stats">
-        <div class="stat-row"><span>Pontuação</span><b id="pause-score">0</b></div>
-        <div class="stat-row"><span>Moedas</span><b id="pause-coins">0</b></div>
-        <div class="stat-row"><span>Distância</span><b id="pause-km">0.00 km</b></div>
-      </div>
-      <div class="overlay-btns">
-        <button id="btn-resume" class="btn-primary">▶ Continuar</button>
-        <button id="btn-restart" class="btn-secondary">🔄 Recomeçar</button>
-        <button id="btn-to-menu" class="btn-secondary">🏠 Menu</button>
-      </div>
-    </div>
-  </div>
+        .xp-fill { height: 100%; background: var(--green); border-radius: 10px; width: 0%; }
 
-  <!-- ═══════════════════════════════════ GAME OVER SCREEN ═══════════════════════════════════ -->
-  <div id="gameover-screen" class="hidden overlay-screen">
-    <div class="overlay-card">
-      <div class="go-emoji" id="go-emoji">💥</div>
-      <h2 id="go-title">Fim de Jogo!</h2>
-      <p id="go-msg">Continue praticando!</p>
-      <div class="go-stats">
-        <div class="stat-row"><span>Pontuação</span><b id="go-score">0</b></div>
-        <div class="stat-row"><span>Recorde</span><b id="go-best">0</b></div>
-        <div class="stat-row"><span>Moedas</span><b id="go-coins">0</b></div>
-        <div class="stat-row"><span>XP Ganho</span><b id="go-xp">+0</b></div>
-        <div class="stat-row"><span>Distância</span><b id="go-km">0.00 km</b></div>
-      </div>
-      <div class="overlay-btns">
-        <button id="btn-play-again" class="btn-primary">▶ Jogar Novamente</button>
-        <button id="btn-go-menu" class="btn-secondary">🏠 Menu</button>
-      </div>
-    </div>
-  </div>
+        button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s;
+        }
 
-  <!-- ═══════════════════════════════════ RANKING SCREEN ═══════════════════════════════════ -->
-  <div id="ranking-screen" class="hidden overlay-screen">
-    <div class="overlay-card wide">
-      <h2>🏆 Top Runners</h2>
-      <ul id="ranking-list" class="ranking-list"></ul>
-      <button class="btn-secondary" data-close="ranking-screen">← Voltar</button>
-    </div>
-  </div>
+        .btn-play { background: var(--cyan); color: var(--dark-blue); }
+        .btn-play:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--cyan); }
 
-  <!-- ═══════════════════════════════════ SHOP SCREEN ═══════════════════════════════════ -->
-  <div id="shop-screen" class="hidden overlay-screen">
-    <div class="overlay-card wide">
-      <h2>🛒 Loja</h2>
-      <div class="shop-currency">
-        <span class="currency-chip">🪙 <span id="shop-coins">0</span></span>
-        <span class="currency-chip gem">💎 <span id="shop-gems">0</span></span>
-      </div>
-      <div class="shop-tabs">
-        <button class="shop-tab active" data-tab="powerups">Power-ups</button>
-        <button class="shop-tab" data-tab="boards">Veículos</button>
-        <button class="shop-tab" data-tab="outfits">Roupas</button>
-      </div>
-      <div id="shop-items" class="shop-items"></div>
-      <button class="btn-secondary" data-close="shop-screen">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ CHALLENGES SCREEN ═══════════════════════════════════ -->
-  <div id="challenges-screen" class="hidden overlay-screen">
-    <div class="overlay-card wide">
-      <h2>🎯 Desafios Diários</h2>
-      <div id="challenges-list" class="challenges-list"></div>
-      <button class="btn-secondary" data-close="challenges-screen">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ SETTINGS SCREEN ═══════════════════════════════════ -->
-  <div id="settings-screen" class="hidden overlay-screen">
-    <div class="overlay-card">
-      <h2>⚙️ Configurações</h2>
-      <div class="settings-section">
-        <label class="settings-label">Idioma</label>
-        <div class="settings-row">
-          <button class="lang-btn active" data-lang="pt">🇧🇷 PT</button>
-          <button class="lang-btn" data-lang="en">🇺🇸 EN</button>
-          <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">Tema</label>
-        <div class="settings-row">
-          <button class="theme-btn active" data-theme="dark">🌑 Escuro</button>
-          <button class="theme-btn" data-theme="light">☀️ Claro</button>
-          <button class="theme-btn" data-theme="bw">⬛ P&amp;B</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">🎵 Música <span id="music-vol-label">80%</span></label>
-        <input type="range" id="music-vol" class="vol-slider" min="0" max="100" value="80" />
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">🔊 SFX <span id="sfx-vol-label">80%</span></label>
-        <input type="range" id="sfx-vol" class="vol-slider" min="0" max="100" value="80" />
-      </div>
-      <button class="btn-secondary" data-close="settings-screen">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ AVATAR PICKER ═══════════════════════════════════ -->
-  <div id="avatar-screen" class="hidden overlay-screen">
-    <div class="overlay-card">
-      <h2>🎨 Escolha seu Avatar</h2>
-      <div id="avatar-grid" class="avatar-grid"></div>
-      <button class="btn-secondary" data-close="avatar-screen">← Voltar</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ NAME EDIT MODAL ═══════════════════════════════════ -->
-  <div id="name-modal" class="hidden overlay-screen">
-    <div class="overlay-card compact">
-      <h2>✏️ Seu Nome</h2>
-      <input type="text" id="name-input" class="name-input" maxlength="20" placeholder="Digite seu nome..." />
-      <div class="overlay-btns">
-        <button id="btn-save-name" class="btn-primary">💾 Salvar</button>
-        <button class="btn-secondary" data-close="name-modal">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ LEVEL UP TOAST ═══════════════════════════════════ -->
-  <div id="levelup-toast" class="hidden toast-pop">
-    <span class="toast-icon">🎉</span>
-    <div class="toast-text">
-      <b>LEVEL UP!</b>
-      <span id="toast-level">Nível 2</span>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════ CERTIFICATE SCREEN ═══════════════════════════════════ -->
-  <div id="cert-screen" class="hidden overlay-screen">
-    <div class="overlay-card wide cert-card">
-      <div class="cert-header">🛡️ Certificado de Conclusão 🛡️</div>
-      <p class="cert-body">Este certificado reconhece que</p>
-      <h2 id="cert-name" class="cert-name">Jogador</h2>
-      <p class="cert-body">completou o <b>Anti-Bullying Runner</b> atingindo o <b>Nível 50</b>, demonstrando conhecimento sobre prevenção ao bullying escolar.</p>
-      <div class="cert-footer">Izael &amp; Felipe · Anti-Bullying Runner</div>
-      <button class="btn-primary" data-close="cert-screen">🏠 Menu</button>
-    </div>
-  </div>
-
-</div><!-- /game-container -->
-
-<script src="script.js"></script>
-</body>
-</html>
+        /* 4. Cenários de Bullying [3, 14, 15] */
+        #scenario-popup {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--dark-blue);
