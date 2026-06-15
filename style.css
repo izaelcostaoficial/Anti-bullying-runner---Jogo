@@ -1,112 +1,246 @@
-/* 1. VARIÁVEIS E CORES [1] */
+/* =========================
+   ANTI-BULLYING RUNNER
+   STYLE.CSS
+========================= */
+
+/* =========================
+   VARIÁVEIS GLOBAIS
+========================= */
 :root {
-    --cyan: #00d9ff;      /* Botões, bordas, destaques */
-    --green: #00ff88;     /* Opções corretas, sucesso */
-    --magenta: #ff006e;   /* Acentos, animações */
-    --dark-purple: #5a189a; /* Fundo principal */
-    --dark-blue: #0f3460;  /* Fundo secundário */
-    --black: #000000;
-    --white: #ffffff;
-    --font-main: 'Arial', sans-serif;
+  --roxo-escuro: #5a189a;
+  --azul-escuro: #0f3460;
+  --cyan: #00d9ff;
+  --verde: #00ff88;
+  --magenta: #ff006e;
+  --branco: #ffffff;
+  --cinza: #e0e0e0;
+  --preto: #000000;
+  --font: Arial, Helvetica, sans-serif;
 }
 
-/* 2. RESET E ESTILOS GLOBAIS [1] */
+/* RESET */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+/* =========================
+   BODY / BASE
+========================= */
 
 body {
-    background-color: var(--black);
-    color: var(--white);
-    overflow: hidden; /* Mantém a tela fixa para o runner */
-    height: 100vh;
-    width: 100vw;
+  font-family: var(--font);
+  overflow: hidden;
+  transition: 0.3s ease;
 }
 
-/* 3. TEMAS [3] */
-body.light-theme {
-    --dark-purple: #f0f0f0;
-    --dark-blue: #ffffff;
-    --white: #000000;
-    --black: #ffffff;
+/* =========================
+   THEMES
+========================= */
+
+/* ESCURO (PADRÃO) */
+.theme-dark {
+  background: linear-gradient(180deg, var(--roxo-escuro), var(--azul-escuro));
+  color: white;
 }
 
-body.bw-theme {
-    filter: grayscale(100%);
+/* CLARO */
+.theme-light {
+  background: linear-gradient(180deg, var(--branco), var(--cinza));
+  color: #111;
 }
 
-/* 4. TELA DE CARREGAMENTO [1, 2, 4] */
-#loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--dark-purple), var(--dark-blue));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+/* PRETO & BRANCO (ACESSIBILIDADE) */
+.theme-bw {
+  background: #fff;
+  color: #000;
+  filter: grayscale(100%);
 }
 
-.logo-shield {
-    font-size: 80px;
-    animation: pulse 2s infinite, bounce 1s infinite alternate; /* [2] */
+/* =========================
+   GAME CONTAINER
+========================= */
+
+#gameContainer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.loading-bar-container {
-    width: 250px;
-    height: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    margin-top: 20px;
-    overflow: hidden;
+/* =========================
+   LOGO PULSANTE
+========================= */
+
+#logo {
+  text-align: center;
+  font-size: 48px;
+  padding: 10px;
+  animation: pulse 2s infinite;
 }
 
-.loading-bar-fill {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, var(--cyan), var(--magenta)); /* [4] */
-    animation: loadingFill 3.5s forwards; /* [1] */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 10px var(--cyan);
+  }
+  50% {
+    transform: scale(1.2);
+    text-shadow: 0 0 25px var(--magenta);
+  }
+  100% {
+    transform: scale(1);
+    text-shadow: 0 0 10px var(--cyan);
+  }
 }
 
-/* 5. HUD E GAMEPLAY [1, 5] */
+/* =========================
+   HUD
+========================= */
+
 #hud {
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    padding: 0 20px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px; /* [1] */
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
 }
 
 .hud-item {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 8px 15px;
-    border-radius: 20px;
-    border: 1px solid var(--cyan);
+  border: 2px solid var(--cyan);
+  padding: 5px 10px;
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: center;
 }
 
-/* 6. CENÁRIOS DE BULLYING (POPUP) [1, 2, 5] */
-.scenario-popup {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 400px;
-    background: var(--dark-blue);
-    border: 3px solid var(--cyan);
-    padding: 20px;
-    border-radius: 15px;
-    animation: slideIn 0.5s ease-out; /* [2] */
+/* =========================
+   CANVAS
+========================= */
+
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--cyan);
+  border-radius: 10px;
 }
 
-.option-btn {
-    display: block;
-    width
+/* =========================
+   BOTÕES
+========================= */
+
+button {
+  background: var(--cyan);
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px var(--cyan);
+}
+
+/* =========================
+   BOUNCE (INTERAÇÕES)
+========================= */
+
+.bounce {
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-12px); }
+  60% { transform: translateY(6px); }
+  100% { transform: translateY(0); }
+}
+
+/* =========================
+   POPUPS (DILEMAS)
+========================= */
+
+.popup {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  padding: 20px;
+  border-radius: 12px;
+
+  background: rgba(15, 52, 96, 0.75);
+  backdrop-filter: blur(15px);
+
+  border: 2px solid var(--cyan);
+  color: white;
+
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -120%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* =========================
+   LOADING BAR
+========================= */
+
+.loading-bar {
+  width: 0%;
+  height: 8px;
+  background: var(--cyan);
+  border-radius: 10px;
+  animation: loading 3.5s linear forwards;
+}
+
+@keyframes loading {
+  0% {
+    width: 0%;
+    background: var(--cyan);
+  }
+  50% {
+    background: var(--verde);
+  }
+  100% {
+    width: 100%;
+    background: var(--magenta);
+  }
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 768px) {
+  #logo {
+    font-size: 32px;
+  }
+
+  #hud {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+  }
+
+  canvas {
+    width: 95%;
+    height: auto;
+  }
+}
