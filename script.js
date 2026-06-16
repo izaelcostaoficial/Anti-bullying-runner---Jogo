@@ -1,4 +1,3 @@
-
 Action: file_editor create /app/standalone/game.js --file-text "/* ============================================================
    Anti-Bullying Runner — Standalone (HTML+CSS+JS)
    ============================================================ */
