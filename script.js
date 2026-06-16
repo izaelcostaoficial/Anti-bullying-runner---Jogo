@@ -1,644 +1,2208 @@
-Action: file_editor create /app/standalone/game.js --file-text "/* ============================================================
-   Anti-Bullying Runner — Standalone (HTML+CSS+JS)
-   ============================================================ */
 
-/* ===== Configuration ===== */
-// If you have a backend (FastAPI) set this. Otherwise leave \"\" and the game uses localStorage.
-const API_BASE = \"\"; // ex: \"https://yourapi.com\"  ->  reqs go to ${API_BASE}/api/...
+/* =====================================================================
+   ANTI-BULLYING RUNNER v2.0 ULTRA — GAME.JS
+   Endless Runner educativo 2.5D — motor completo do jogo
+   Organização:
+     1.  Configuração e constantes
+     2.  Dicionário de internacionalização (PT / EN / ES)
+     3.  Conteúdo: dilemas de bullying (6 cenários)
+     4.  Conteúdo: itens da loja (vestes, power-ups, temas)
+     5.  Estado e persistência (localStorage)
+     6.  Áudio (Web Audio API — música e efeitos sonoros)
+     7.  Utilitários gerais
+     8.  Internacionalização — aplicação no DOM
+     9.  Navegação entre telas
+     10. Tela: Loading
+     11. Tela: Menu
+     12. Tela: Como Jogar
+     13. Tela: Loja
+     14. Tela: Configurações
+     15. Tela: Ranking (Top Run)
+     16. Motor do jogo — canvas, física, entidades, render
+     17. Controles (teclado e touch)
+     18. Dilemas — fluxo de pergunta/resposta
+     19. Pausa / Game Over
+     20. Boot — inicialização geral
+   ===================================================================== */
 
-/* ===== i18n ===== */
+(function () {
+'use strict';
+
+/* =====================================================================
+   1. CONFIGURAÇÃO E CONSTANTES
+   ===================================================================== */
+
+const CONFIG = {
+  LANES: 3,
+  GRAVITY: 0.6,
+  JUMP_FORCE: 12,
+  BASE_SPEED: 5,
+  MAX_SPEED: 15,
+  SPEED_GAIN_PER_SCORE: 0.0007,
+  SPEED_MULT_BOOST: 1.45,
+  SPEED_MULT_SLOW: 0.55,
+  PROGRESS_DIVISOR: 230,
+  LIVES_MAX: 3,
+  XP_PER_LEVEL: 100,
+  MAX_LEVEL: 50,
+  XP_CORRECT: 500,
+  XP_WRONG: -50,
+  XP_COIN: 10,
+  XP_GEM: 50,
+  DILEMMA_SCORE_STEP: 450,
+  SPAWN_INTERVAL_BASE: 1150,
+  SPAWN_INTERVAL_MIN: 560,
+  SPAWN_DIFFICULTY_SCORE: 4500,
+  MAGNET_PULL: 0.10,
+  MAGNET_RANGE_P: 0.55,
+  SLIDE_DURATION_TICKS: 26,
+  POWER_DURATION: { shield: 9000, speed: 6000, magnet: 8000, slow: 6000, jetpack: 7000 },
+  POWER_MAX_STACK: 3,
+  RANKING_MAX_VISIBLE: 12
+};
+
+const FIXED_DT = 1000 / 60;
+const STORAGE_KEY_STATE = 'abr_v2_state';
+const STORAGE_KEY_RANKING = 'abr_v2_ranking';
+const DYNAMIC_I18N_SKIP = new Set(['menu-player-level']);
+
+
+/* =====================================================================
+   2. DICIONÁRIO DE INTERNACIONALIZAÇÃO
+   ===================================================================== */
+
 const I18N = {
-  pt: { tagline:\"Corra. Aprenda. Defenda. Inspire.\", play:\"JOGAR\", login:\"Entrar\", register:\"Cadastrar\", logout:\"Sair\", leaderboard:\"Ranking\", settings:\"Configurações\", welcomeBack:\"Bem-vindo de volta\", email:\"Email\", password:\"Senha\", name:\"Nome\", signInGoogle:\"Entrar com Google\", or:\"ou\", haveAccount:\"Já tem conta?\", noAccount:\"Não tem conta?\", createAccount:\"Criar conta\", score:\"Pontos\", bestScore:\"Recorde\", lives:\"Vidas\", correct:\"Acertos\", pause:\"PAUSA\", resume:\"Continuar\", quit:\"Sair\", instructions:\"Setas / WASD ou Toque para mover. Desvie dos obstáculos. Responda perguntas para sobreviver.\", gameOver:\"Fim de Jogo\", youDied:\"Você foi derrotado\", newRecord:\"Novo Recorde!\", playAgain:\"Jogar Novamente\", backToMenu:\"Voltar ao Menu\", language:\"Idioma\", theme:\"Cor do Tema\", colorblind:\"Modo Daltônico\", colorblindOff:\"Desligado\", colorblindDeuteranopia:\"Deuteranopia\", colorblindProtanopia:\"Protanopia\", colorblindTritanopia:\"Tritanopia\", noScores:\"Nenhuma pontuação ainda.\", correctAnswer:\"Resposta correta!\", wrongAnswer:\"Resposta errada!\", chooseAnswer:\"Escolha a resposta correta\", loginToSave:\"Faça login para salvar sua pontuação.\" },
-  en: { tagline:\"Run. Learn. Defend. Inspire.\", play:\"PLAY\", login:\"Sign in\", register:\"Sign up\", logout:\"Log out\", leaderboard:\"Leaderboard\", settings:\"Settings\", welcomeBack:\"Welcome back\", email:\"Email\", password:\"Password\", name:\"Name\", signInGoogle:\"Sign in with Google\", or:\"or\", haveAccount:\"Already have an account?\", noAccount:\"Don't have an account?\", createAccount:\"Create account\", score:\"Score\", bestScore:\"Best\", lives:\"Lives\", correct:\"Correct\", pause:\"PAUSE\", resume:\"Resume\", quit:\"Quit\", instructions:\"Arrows / WASD or Tap to move. Dodge obstacles. Answer questions to survive.\", gameOver:\"Game Over\", youDied:\"You were defeated\", newRecord:\"New Record!\", playAgain:\"Play Again\", backToMenu:\"Back to Menu\", language:\"Language\", theme:\"Theme color\", colorblind:\"Colorblind mode\", colorblindOff:\"Off\", colorblindDeuteranopia:\"Deuteranopia\", colorblindProtanopia:\"Protanopia\", colorblindTritanopia:\"Tritanopia\", noScores:\"No scores yet.\", correctAnswer:\"Correct!\", wrongAnswer:\"Wrong answer!\", chooseAnswer:\"Choose the correct answer\", loginToSave:\"Sign in to save your score.\" },
-  es: { tagline:\"Corre. Aprende. Defiende. Inspira.\", play:\"JUGAR\", login:\"Entrar\", register:\"Registrarse\", logout:\"Salir\", leaderboard:\"Clasificación\", settings:\"Ajustes\", welcomeBack:\"Bienvenido de nuevo\", email:\"Correo\", password:\"Contraseña\", name:\"Nombre\", signInGoogle:\"Entrar con Google\", or:\"o\", haveAccount:\"¿Ya tienes cuenta?\", noAccount:\"¿No tienes cuenta?\", createAccount:\"Crear cuenta\", score:\"Puntos\", bestScore:\"Récord\", lives:\"Vidas\", correct:\"Aciertos\", pause:\"PAUSA\", resume:\"Continuar\", quit:\"Salir\", instructions:\"Flechas / WASD o Tocar para moverse. Esquiva los obstáculos. Responde preguntas para sobrevivir.\", gameOver:\"Fin del juego\", youDied:\"Has sido derrotado\", newRecord:\"¡Nuevo récord!\", playAgain:\"Jugar de nuevo\", backToMenu:\"Volver al menú\", language:\"Idioma\", theme:\"Color del tema\", colorblind:\"Modo daltónico\", colorblindOff:\"Apagado\", colorblindDeuteranopia:\"Deuteranopía\", colorblindProtanopia:\"Protanopía\", colorblindTritanopia:\"Tritanopía\", noScores:\"Aún no hay puntuaciones.\", correctAnswer:\"¡Correcto!\", wrongAnswer:\"¡Respuesta incorrecta!\", chooseAnswer:\"Elige la respuesta correcta\", loginToSave:\"Inicia sesión para guardar tu puntuación.\" }
+  pt: {
+    'loading.tip': 'Dica: contar para um adulto de confiança não é "dedurar" — é coragem.',
+    'loading.status': 'Carregando recursos do jogo…',
+    'loading.credits': 'Um projeto educativo sobre prevenção ao bullying',
+    'menu.level': 'Nível {n}',
+    'menu.title.line1': 'ANTI-BULLYING',
+    'menu.title.line2': 'RUNNER',
+    'menu.subtitle': 'Corra. Decida. Faça a diferença.',
+    'menu.play': 'JOGAR',
+    'menu.shop': 'LOJA',
+    'menu.ranking': 'TOP RUN',
+    'menu.settings': 'CONFIGURAÇÕES',
+    'menu.howto': 'COMO JOGAR',
+    'menu.footer': 'v2.0 ULTRA — Movimente-se, decida com empatia.',
+    'howto.title': 'Como Jogar',
+    'howto.movement.title': 'Movimento',
+    'howto.movement.desc': 'Mova-se entre as 3 pistas, pule trens e deslize por baixo de obstáculos.',
+    'howto.powers.title': 'Poderes',
+    'howto.power.shield': 'Escudo — protege de uma colisão',
+    'howto.power.speed': 'Velocidade — acelera e multiplica XP',
+    'howto.power.magnet': 'Ímã — atrai moedas e gemas',
+    'howto.power.slow': 'Lentidão — facilita os desvios',
+    'howto.power.jetpack': 'Jetpack — voe sobre as pistas',
+    'howto.mobile.title': 'No Celular',
+    'howto.mobile.desc': 'Deslize para os lados para trocar de pista, para cima para pular e para baixo para escorregar. Use os botões de poder na tela.',
+    'howto.dilemmas.title': 'Dilemas',
+    'howto.dilemmas.desc': 'De tempos em tempos o jogo pausa e mostra uma situação real de bullying. Escolha a atitude mais empática para ganhar XP.',
+    'shop.title': 'Loja',
+    'shop.tab.skins': 'Vestes',
+    'shop.tab.powerups': 'Power-ups',
+    'shop.tab.themes': 'Temas',
+    'shop.buy': 'Comprar',
+    'shop.equip': 'Equipar',
+    'shop.equipped': 'Equipado',
+    'shop.owned': 'Adquirido',
+    'shop.level': 'Nível',
+    'shop.maxlevel': 'MÁXIMO',
+    'shop.startCharges': 'cargas iniciais por corrida',
+    'settings.title': 'Configurações',
+    'settings.name.title': 'Nome do Jogador',
+    'settings.name.save': 'Salvar',
+    'settings.name.saved': 'Nome salvo!',
+    'settings.lang.title': 'Idioma',
+    'settings.theme.title': 'Tema Visual',
+    'settings.theme.arcade': 'Arcade',
+    'settings.theme.forest': 'Floresta',
+    'settings.theme.ocean': 'Oceano',
+    'settings.theme.sunset': 'Pôr do Sol',
+    'settings.audio.title': 'Áudio',
+    'settings.audio.music': 'Música',
+    'settings.audio.sfx': 'Efeitos Sonoros',
+    'settings.reset.title': 'Dados',
+    'settings.reset.desc': 'Apagar todo o progresso salvo neste dispositivo (moedas, gemas, nível e ranking).',
+    'settings.reset.button': 'Apagar Progresso',
+    'settings.reset.confirm': 'Tem certeza? Essa ação não pode ser desfeita.',
+    'ranking.title': 'Top Run',
+    'ranking.empty': 'Ninguém correu ainda. Seja o primeiro do Top Run!',
+    'game.score': 'PONTOS',
+    'login.title': 'Bem-vindo(a)!',
+    'login.desc': 'Como podemos te chamar nesta corrida?',
+    'login.confirm': 'Começar',
+    'login.placeholder': 'Seu nome',
+    'dilemma.tag': 'DILEMA',
+    'dilemma.continue': 'Continuar Corrida',
+    'dilemma.correct': 'Resposta certa! +{xp} XP',
+    'dilemma.incorrect': 'Não foi a melhor escolha. {xp} XP e uma vida perdida.',
+    'pause.title': 'Pausado',
+    'pause.resume': 'Continuar',
+    'pause.restart': 'Reiniciar',
+    'pause.settings': 'Configurações',
+    'pause.exit': 'Sair para o Menu',
+    'gameover.title': 'Fim de Jogo',
+    'gameover.score': 'Pontuação',
+    'gameover.xp': 'XP Ganho',
+    'gameover.coins': 'Moedas',
+    'gameover.gems': 'Gemas',
+    'gameover.newrecord': '🎉 Novo Recorde Pessoal!',
+    'gameover.retry': 'Correr de Novo',
+    'gameover.menu': 'Voltar ao Menu',
+    'levelup.text': 'Nível {n} Alcançado!',
+    'category.theft': 'ROUBO',
+    'category.gossip': 'FOFOCA',
+    'category.exclusion': 'EXCLUSÃO',
+    'category.cyber': 'CYBERBULLYING',
+    'category.aggression': 'AGRESSÃO',
+    'category.pressure': 'PRESSÃO'
+  },
+  en: {
+    'loading.tip': 'Tip: telling a trusted adult isn\'t "snitching" — it\'s courage.',
+    'loading.status': 'Loading game assets…',
+    'loading.credits': 'An educational project about bullying prevention',
+    'menu.level': 'Level {n}',
+    'menu.title.line1': 'ANTI-BULLYING',
+    'menu.title.line2': 'RUNNER',
+    'menu.subtitle': 'Run. Decide. Make a difference.',
+    'menu.play': 'PLAY',
+    'menu.shop': 'SHOP',
+    'menu.ranking': 'TOP RUN',
+    'menu.settings': 'SETTINGS',
+    'menu.howto': 'HOW TO PLAY',
+    'menu.footer': 'v2.0 ULTRA — Move forward, decide with empathy.',
+    'howto.title': 'How To Play',
+    'howto.movement.title': 'Movement',
+    'howto.movement.desc': 'Move between the 3 lanes, jump over trains and slide under obstacles.',
+    'howto.powers.title': 'Powers',
+    'howto.power.shield': 'Shield — protects from one collision',
+    'howto.power.speed': 'Speed — accelerates and multiplies XP',
+    'howto.power.magnet': 'Magnet — attracts coins and gems',
+    'howto.power.slow': 'Slow-mo — makes dodging easier',
+    'howto.power.jetpack': 'Jetpack — fly above the lanes',
+    'howto.mobile.title': 'On Mobile',
+    'howto.mobile.desc': 'Swipe sideways to switch lanes, swipe up to jump and down to slide. Use the power buttons on screen.',
+    'howto.dilemmas.title': 'Dilemmas',
+    'howto.dilemmas.desc': 'From time to time the game pauses to show a real bullying situation. Pick the most empathetic action to earn XP.',
+    'shop.title': 'Shop',
+    'shop.tab.skins': 'Skins',
+    'shop.tab.powerups': 'Power-ups',
+    'shop.tab.themes': 'Themes',
+    'shop.buy': 'Buy',
+    'shop.equip': 'Equip',
+    'shop.equipped': 'Equipped',
+    'shop.owned': 'Owned',
+    'shop.level': 'Level',
+    'shop.maxlevel': 'MAX',
+    'shop.startCharges': 'starting charges per run',
+    'settings.title': 'Settings',
+    'settings.name.title': 'Player Name',
+    'settings.name.save': 'Save',
+    'settings.name.saved': 'Name saved!',
+    'settings.lang.title': 'Language',
+    'settings.theme.title': 'Visual Theme',
+    'settings.theme.arcade': 'Arcade',
+    'settings.theme.forest': 'Forest',
+    'settings.theme.ocean': 'Ocean',
+    'settings.theme.sunset': 'Sunset',
+    'settings.audio.title': 'Audio',
+    'settings.audio.music': 'Music',
+    'settings.audio.sfx': 'Sound Effects',
+    'settings.reset.title': 'Data',
+    'settings.reset.desc': 'Erase all progress saved on this device (coins, gems, level and ranking).',
+    'settings.reset.button': 'Erase Progress',
+    'settings.reset.confirm': 'Are you sure? This cannot be undone.',
+    'ranking.title': 'Top Run',
+    'ranking.empty': 'No one has run yet. Be the first on the Top Run!',
+    'game.score': 'SCORE',
+    'login.title': 'Welcome!',
+    'login.desc': 'What should we call you in this run?',
+    'login.confirm': 'Start',
+    'login.placeholder': 'Your name',
+    'dilemma.tag': 'DILEMMA',
+    'dilemma.continue': 'Continue Run',
+    'dilemma.correct': 'Right answer! +{xp} XP',
+    'dilemma.incorrect': 'Not the best choice. {xp} XP and a life lost.',
+    'pause.title': 'Paused',
+    'pause.resume': 'Resume',
+    'pause.restart': 'Restart',
+    'pause.settings': 'Settings',
+    'pause.exit': 'Exit to Menu',
+    'gameover.title': 'Game Over',
+    'gameover.score': 'Score',
+    'gameover.xp': 'XP Earned',
+    'gameover.coins': 'Coins',
+    'gameover.gems': 'Gems',
+    'gameover.newrecord': '🎉 New Personal Record!',
+    'gameover.retry': 'Run Again',
+    'gameover.menu': 'Back to Menu',
+    'levelup.text': 'Level {n} Reached!',
+    'category.theft': 'THEFT',
+    'category.gossip': 'GOSSIP',
+    'category.exclusion': 'EXCLUSION',
+    'category.cyber': 'CYBERBULLYING',
+    'category.aggression': 'AGGRESSION',
+    'category.pressure': 'PEER PRESSURE'
+  },
+  es: {
+    'loading.tip': 'Consejo: contarle a un adulto de confianza no es "acusar" — es valentía.',
+    'loading.status': 'Cargando recursos del juego…',
+    'loading.credits': 'Un proyecto educativo sobre prevención del bullying',
+    'menu.level': 'Nivel {n}',
+    'menu.title.line1': 'ANTI-BULLYING',
+    'menu.title.line2': 'RUNNER',
+    'menu.subtitle': 'Corre. Decide. Marca la diferencia.',
+    'menu.play': 'JUGAR',
+    'menu.shop': 'TIENDA',
+    'menu.ranking': 'TOP RUN',
+    'menu.settings': 'AJUSTES',
+    'menu.howto': 'CÓMO JUGAR',
+    'menu.footer': 'v2.0 ULTRA — Avanza, decide con empatía.',
+    'howto.title': 'Cómo Jugar',
+    'howto.movement.title': 'Movimiento',
+    'howto.movement.desc': 'Muévete entre los 3 carriles, salta trenes y deslízate bajo los obstáculos.',
+    'howto.powers.title': 'Poderes',
+    'howto.power.shield': 'Escudo — protege de una colisión',
+    'howto.power.speed': 'Velocidad — acelera y multiplica el XP',
+    'howto.power.magnet': 'Imán — atrae monedas y gemas',
+    'howto.power.slow': 'Lentitud — facilita esquivar',
+    'howto.power.jetpack': 'Jetpack — vuela sobre los carriles',
+    'howto.mobile.title': 'En el Celular',
+    'howto.mobile.desc': 'Deslizá hacia los lados para cambiar de carril, hacia arriba para saltar y hacia abajo para deslizarte. Usá los botones de poder en pantalla.',
+    'howto.dilemmas.title': 'Dilemas',
+    'howto.dilemmas.desc': 'De vez en cuando el juego se pausa y muestra una situación real de bullying. Elegí la actitud más empática para ganar XP.',
+    'shop.title': 'Tienda',
+    'shop.tab.skins': 'Atuendos',
+    'shop.tab.powerups': 'Power-ups',
+    'shop.tab.themes': 'Temas',
+    'shop.buy': 'Comprar',
+    'shop.equip': 'Equipar',
+    'shop.equipped': 'Equipado',
+    'shop.owned': 'Adquirido',
+    'shop.level': 'Nivel',
+    'shop.maxlevel': 'MÁXIMO',
+    'shop.startCharges': 'cargas iniciales por carrera',
+    'settings.title': 'Ajustes',
+    'settings.name.title': 'Nombre del Jugador',
+    'settings.name.save': 'Guardar',
+    'settings.name.saved': '¡Nombre guardado!',
+    'settings.lang.title': 'Idioma',
+    'settings.theme.title': 'Tema Visual',
+    'settings.theme.arcade': 'Arcade',
+    'settings.theme.forest': 'Bosque',
+    'settings.theme.ocean': 'Océano',
+    'settings.theme.sunset': 'Atardecer',
+    'settings.audio.title': 'Audio',
+    'settings.audio.music': 'Música',
+    'settings.audio.sfx': 'Efectos de Sonido',
+    'settings.reset.title': 'Datos',
+    'settings.reset.desc': 'Borrar todo el progreso guardado en este dispositivo (monedas, gemas, nivel y ranking).',
+    'settings.reset.button': 'Borrar Progreso',
+    'settings.reset.confirm': '¿Estás seguro? Esta acción no se puede deshacer.',
+    'ranking.title': 'Top Run',
+    'ranking.empty': 'Nadie ha corrido todavía. ¡Sé el primero en el Top Run!',
+    'game.score': 'PUNTOS',
+    'login.title': '¡Bienvenido(a)!',
+    'login.desc': '¿Cómo te llamamos en esta carrera?',
+    'login.confirm': 'Comenzar',
+    'login.placeholder': 'Tu nombre',
+    'dilemma.tag': 'DILEMA',
+    'dilemma.continue': 'Continuar Carrera',
+    'dilemma.correct': '¡Respuesta correcta! +{xp} XP',
+    'dilemma.incorrect': 'No fue la mejor opción. {xp} XP y una vida perdida.',
+    'pause.title': 'Pausado',
+    'pause.resume': 'Continuar',
+    'pause.restart': 'Reiniciar',
+    'pause.settings': 'Ajustes',
+    'pause.exit': 'Salir al Menú',
+    'gameover.title': 'Fin del Juego',
+    'gameover.score': 'Puntuación',
+    'gameover.xp': 'XP Ganado',
+    'gameover.coins': 'Monedas',
+    'gameover.gems': 'Gemas',
+    'gameover.newrecord': '🎉 ¡Nuevo Récord Personal!',
+    'gameover.retry': 'Correr de Nuevo',
+    'gameover.menu': 'Volver al Menú',
+    'levelup.text': '¡Nivel {n} Alcanzado!',
+    'category.theft': 'ROBO',
+    'category.gossip': 'CHISME',
+    'category.exclusion': 'EXCLUSIÓN',
+    'category.cyber': 'CYBERACOSO',
+    'category.aggression': 'AGRESIÓN',
+    'category.pressure': 'PRESIÓN DE GRUPO'
+  }
 };
 
-/* ===== Anti-Bullying questions (PT/EN/ES) ===== */
-const QUESTIONS = {
-  pt: [
-    {q:\"O que é bullying?\",options:[\"Uma brincadeira inofensiva\",\"Agressão repetida e intencional contra alguém\",\"Um esporte\",\"Um tipo de jogo online\"],answer:1},
-    {q:\"Você presencia um colega sendo humilhado. Qual a melhor atitude?\",options:[\"Rir junto dos agressores\",\"Ignorar e ir embora\",\"Apoiar a vítima e avisar um adulto de confiança\",\"Filmar e postar nas redes\"],answer:2},
-    {q:\"Cyberbullying acontece...\",options:[\"Apenas em jogos\",\"Em qualquer ambiente digital (redes, chats, jogos)\",\"Apenas em e-mails\",\"Não existe\"],answer:1},
-    {q:\"Qual destas atitudes NÃO é bullying?\",options:[\"Apelidar para humilhar\",\"Excluir alguém de propósito\",\"Convidar um colega para um trabalho em grupo\",\"Espalhar boatos\"],answer:2},
-    {q:\"Se você sofre bullying, o que deve fazer primeiro?\",options:[\"Reagir com violência\",\"Sofrer em silêncio\",\"Conversar com um adulto de confiança\",\"Mudar de escola sozinho\"],answer:2},
-    {q:\"Empatia significa...\",options:[\"Sentir pena\",\"Se colocar no lugar do outro\",\"Ignorar sentimentos\",\"Concordar com tudo\"],answer:1},
-    {q:\"O bullying pode causar...\",options:[\"Apenas tristeza passageira\",\"Ansiedade, depressão e baixa autoestima\",\"Melhora nas notas\",\"Mais amigos\"],answer:1},
-    {q:\"Qual destas é uma forma de bullying?\",options:[\"Bullying físico\",\"Bullying verbal\",\"Bullying social (exclusão)\",\"Todas as anteriores\"],answer:3},
-    {q:\"Ao ver alguém sofrendo bullying online, você deve...\",options:[\"Compartilhar o conteúdo\",\"Denunciar e dar suporte à vítima\",\"Comentar zombando\",\"Ignorar totalmente\"],answer:1},
-    {q:\"Respeitar as diferenças é...\",options:[\"Sinal de fraqueza\",\"Sinal de maturidade e respeito\",\"Algo opcional\",\"Apenas para adultos\"],answer:1},
-    {q:\"Uma palavra de gentileza pode...\",options:[\"Não fazer diferença\",\"Salvar o dia de alguém\",\"Causar bullying\",\"Atrapalhar\"],answer:1},
-    {q:\"Bullying é crime no Brasil?\",options:[\"Não\",\"Sim, há leis específicas que protegem as vítimas\",\"Apenas se for físico\",\"Apenas para adultos\"],answer:1}
-  ],
-  en: [
-    {q:\"What is bullying?\",options:[\"A harmless joke\",\"Repeated and intentional aggression\",\"A sport\",\"An online game\"],answer:1},
-    {q:\"You witness a classmate being humiliated. What is the best attitude?\",options:[\"Laugh with the bullies\",\"Ignore and walk away\",\"Support the victim and tell a trusted adult\",\"Film and post on social media\"],answer:2},
-    {q:\"Cyberbullying happens...\",options:[\"Only in games\",\"In any digital environment\",\"Only in emails\",\"It does not exist\"],answer:1},
-    {q:\"Which is NOT bullying?\",options:[\"Nicknaming to humiliate\",\"Excluding someone on purpose\",\"Inviting a classmate to a group project\",\"Spreading rumors\"],answer:2},
-    {q:\"If you suffer bullying, what should you do first?\",options:[\"React with violence\",\"Suffer in silence\",\"Talk to a trusted adult\",\"Change schools alone\"],answer:2},
-    {q:\"Empathy means...\",options:[\"Feeling pity\",\"Putting yourself in someone else's shoes\",\"Ignoring feelings\",\"Agreeing with everything\"],answer:1},
-    {q:\"Bullying can cause...\",options:[\"Only brief sadness\",\"Anxiety, depression and low self-esteem\",\"Better grades\",\"More friends\"],answer:1},
-    {q:\"Which is a form of bullying?\",options:[\"Physical\",\"Verbal\",\"Social (exclusion)\",\"All of the above\"],answer:3},
-    {q:\"When you see cyberbullying, you should...\",options:[\"Share the content\",\"Report and support the victim\",\"Mock the victim\",\"Completely ignore\"],answer:1},
-    {q:\"Respecting differences is...\",options:[\"A sign of weakness\",\"A sign of maturity and respect\",\"Optional\",\"Only for adults\"],answer:1},
-    {q:\"A kind word can...\",options:[\"Make no difference\",\"Save someone's day\",\"Cause bullying\",\"Get in the way\"],answer:1},
-    {q:\"Is bullying a crime?\",options:[\"No\",\"Yes, many countries have specific laws\",\"Only if physical\",\"Only for adults\"],answer:1}
-  ],
-  es: [
-    {q:\"¿Qué es el bullying?\",options:[\"Una broma inofensiva\",\"Agresión repetida e intencional\",\"Un deporte\",\"Un juego en línea\"],answer:1},
-    {q:\"Presencias a un compañero humillado. ¿Cuál es la mejor actitud?\",options:[\"Reírte con los agresores\",\"Ignorar e irte\",\"Apoyar a la víctima y avisar a un adulto\",\"Grabar y publicar\"],answer:2},
-    {q:\"El ciberacoso ocurre...\",options:[\"Solo en juegos\",\"En cualquier entorno digital\",\"Solo en correos\",\"No existe\"],answer:1},
-    {q:\"¿Cuál NO es bullying?\",options:[\"Poner apodos para humillar\",\"Excluir a propósito\",\"Invitar a un compañero a un trabajo\",\"Difundir rumores\"],answer:2},
-    {q:\"Si sufres bullying, ¿qué hacer primero?\",options:[\"Reaccionar con violencia\",\"Sufrir en silencio\",\"Hablar con un adulto de confianza\",\"Cambiar de escuela solo\"],answer:2},
-    {q:\"La empatía significa...\",options:[\"Sentir lástima\",\"Ponerte en el lugar del otro\",\"Ignorar sentimientos\",\"Estar de acuerdo con todo\"],answer:1},
-    {q:\"El bullying puede causar...\",options:[\"Solo tristeza pasajera\",\"Ansiedad, depresión y baja autoestima\",\"Mejores notas\",\"Más amigos\"],answer:1},
-    {q:\"¿Cuál es una forma de bullying?\",options:[\"Físico\",\"Verbal\",\"Social (exclusión)\",\"Todas las anteriores\"],answer:3},
-    {q:\"Al ver ciberacoso, debes...\",options:[\"Compartir el contenido\",\"Denunciar y apoyar a la víctima\",\"Comentar burlándote\",\"Ignorar\"],answer:1},
-    {q:\"Respetar las diferencias es...\",options:[\"Señal de debilidad\",\"Señal de madurez y respeto\",\"Opcional\",\"Solo para adultos\"],answer:1},
-    {q:\"Una palabra amable puede...\",options:[\"No hacer diferencia\",\"Salvar el día de alguien\",\"Causar bullying\",\"Estorbar\"],answer:1},
-    {q:\"¿El bullying es un delito?\",options:[\"No\",\"Sí, muchas leyes específicas protegen a las víctimas\",\"Solo si es físico\",\"Solo para adultos\"],answer:1}
-  ]
+function t(key, vars) {
+  const lang = state.settings.lang || 'pt';
+  let str = (I18N[lang] && I18N[lang][key]) || (I18N.pt && I18N.pt[key]) || key;
+  if (vars) {
+    Object.keys(vars).forEach(function (k) {
+      str = str.replace('{' + k + '}', vars[k]);
+    });
+  }
+  return str;
+}
+
+
+/* =====================================================================
+   3. CONTEÚDO: DILEMAS DE BULLYING (6 CENÁRIOS)
+   ===================================================================== */
+
+const DILEMMAS = [
+  {
+    id: 'theft', icon: '💰', categoryKey: 'category.theft',
+    title: { pt: 'Roubo no Refeitório', en: 'Theft at the Cafeteria', es: 'Robo en el Comedor' },
+    text: {
+      pt: 'Você vê um colega maior forçando outro a entregar o lanche e o dinheiro do almoço. O colega menor parece assustado.',
+      en: 'You see an older student forcing a younger one to hand over their lunch and money. The smaller kid looks scared.',
+      es: 'Ves a un alumno mayor obligando a otro a entregar su almuerzo y dinero. El más pequeño parece asustado.'
+    },
+    options: [
+      { correct: false, kind: 'harmful', text: { pt: 'Filmar a cena para postar depois', en: 'Film the scene to post it later', es: 'Filmar la escena para publicarla después' } },
+      { correct: true, kind: 'good', text: { pt: 'Avisar imediatamente um professor ou funcionário', en: 'Immediately tell a teacher or staff member', es: 'Avisar de inmediato a un profesor o empleado' } },
+      { correct: false, kind: 'passive', text: { pt: 'Fingir que não viu e seguir andando', en: 'Pretend you didn\'t see and keep walking', es: 'Fingir que no viste y seguir caminando' } }
+    ],
+    feedbackCorrect: { pt: 'Procurar um adulto de confiança rapidamente protege a vítima sem te colocar em risco.', en: 'Quickly finding a trusted adult protects the victim without putting you at risk.', es: 'Buscar rápido a un adulto de confianza protege a la víctima sin ponerte en riesgo.' },
+    feedbackIncorrect: { pt: 'Ignorar ou gravar sem ajudar permite que o roubo continue. Buscar um adulto é o caminho mais seguro.', en: 'Ignoring or filming without helping lets the theft continue. Finding an adult is the safest path.', es: 'Ignorar o grabar sin ayudar permite que el robo continúe. Buscar un adulto es el camino más seguro.' }
+  },
+  {
+    id: 'gossip', icon: '🗣️', categoryKey: 'category.gossip',
+    title: { pt: 'Fofoca Maldosa', en: 'Cruel Gossip', es: 'Chisme Cruel' },
+    text: {
+      pt: 'Um grupo está inventando e espalhando rumores cruéis sobre uma colega só para humilhá-la na frente da turma.',
+      en: 'A group is making up and spreading cruel rumors about a classmate just to humiliate her in front of everyone.',
+      es: 'Un grupo está inventando y difundiendo rumores crueles sobre una compañera solo para humillarla frente a todos.'
+    },
+    options: [
+      { correct: false, kind: 'harmful', text: { pt: 'Repassar a fofoca para mais pessoas, "só por curiosidade"', en: 'Pass the gossip on to more people, "just out of curiosity"', es: 'Pasar el chisme a más personas, "solo por curiosidad"' } },
+      { correct: false, kind: 'passive', text: { pt: 'Rir junto para não ficar de fora do grupo', en: 'Laugh along so you\'re not left out of the group', es: 'Reírte también para no quedar fuera del grupo' } },
+      { correct: true, kind: 'good', text: { pt: 'Dizer ao grupo que aquilo é injusto e parar de espalhar', en: 'Tell the group it\'s unfair and stop spreading it', es: 'Decirle al grupo que es injusto y dejar de difundirlo' } }
+    ],
+    feedbackCorrect: { pt: 'Recusar-se a propagar fofocas e dizer que é injusto ajuda a interromper o ciclo do boato.', en: 'Refusing to spread gossip and calling it unfair helps stop the rumor cycle.', es: 'Negarte a difundir chismes y decir que es injusto ayuda a detener el ciclo del rumor.' },
+    feedbackIncorrect: { pt: 'Espalhar ou rir da fofoca machuca ainda mais quem é o alvo.', en: 'Spreading or laughing at the gossip hurts the target even more.', es: 'Difundir o reírse del chisme lastima aún más al objetivo.' }
+  },
+  {
+    id: 'exclusion', icon: '🚫', categoryKey: 'category.exclusion',
+    title: { pt: 'Deixado de Fora', en: 'Left Out', es: 'Dejado de Lado' },
+    text: {
+      pt: 'Toda vez que um colega tenta se sentar com o grupo no intervalo, todos se levantam e vão embora de propósito.',
+      en: 'Every time a classmate tries to sit with the group at break, everyone gets up and leaves on purpose.',
+      es: 'Cada vez que un compañero intenta sentarse con el grupo en el recreo, todos se levantan y se van a propósito.'
+    },
+    options: [
+      { correct: false, kind: 'passive', text: { pt: 'Não fazer nada, afinal não é da sua conta', en: 'Do nothing, it\'s not your business anyway', es: 'No hacer nada, al fin y al cabo no es tu asunto' } },
+      { correct: true, kind: 'good', text: { pt: 'Convidar o colega para sentar com você', en: 'Invite the classmate to sit with you', es: 'Invitar al compañero a sentarse con vos' } },
+      { correct: false, kind: 'harmful', text: { pt: 'Combinar com o grupo de continuar excluindo', en: 'Agree with the group to keep excluding them', es: 'Acordar con el grupo seguir excluyéndolo' } }
+    ],
+    feedbackCorrect: { pt: 'Um simples convite para incluir alguém pode mudar completamente o dia dessa pessoa.', en: 'A simple invitation to include someone can completely change their day.', es: 'Una simple invitación para incluir a alguien puede cambiar por completo su día.' },
+    feedbackIncorrect: { pt: 'Excluir alguém de propósito machuca, mesmo sem palavras ou agressão física.', en: 'Excluding someone on purpose hurts, even without words or physical aggression.', es: 'Excluir a alguien a propósito duele, incluso sin palabras ni agresión física.' }
+  },
+  {
+    id: 'cyber', icon: '📱', categoryKey: 'category.cyber',
+    title: { pt: 'Grupo de Mensagens Cruel', en: 'Cruel Message Group', es: 'Grupo de Mensajes Cruel' },
+    text: {
+      pt: 'Em um grupo de chat da turma, várias pessoas estão zoando e mandando memes ofensivos sobre um colega.',
+      en: 'In a class chat group, several people are mocking and sending offensive memes about a classmate.',
+      es: 'En un grupo de chat de la clase, varias personas se burlan y envían memes ofensivos sobre un compañero.'
+    },
+    options: [
+      { correct: false, kind: 'harmful', text: { pt: 'Mandar mais memes para "entrar na brincadeira"', en: 'Send more memes to "join in the fun"', es: 'Enviar más memes para "seguir la broma"' } },
+      { correct: true, kind: 'good', text: { pt: 'Sair do grupo, denunciar as mensagens e avisar um adulto', en: 'Leave the group, report the messages and tell an adult', es: 'Salir del grupo, reportar los mensajes y avisar a un adulto' } },
+      { correct: false, kind: 'passive', text: { pt: 'Só ler em silêncio sem responder nada', en: 'Just read silently without responding', es: 'Solo leer en silencio sin responder nada' } }
+    ],
+    feedbackCorrect: { pt: 'Denunciar e avisar um adulto de confiança ajuda a interromper o cyberbullying antes que piore.', en: 'Reporting it and telling a trusted adult helps stop cyberbullying before it gets worse.', es: 'Reportar y avisar a un adulto de confianza ayuda a detener el ciberacoso antes de que empeore.' },
+    feedbackIncorrect: { pt: 'Participar ou apenas observar em silêncio permite que o cyberbullying continue.', en: 'Joining in or just silently watching lets cyberbullying continue.', es: 'Participar o solo observar en silencio permite que el ciberacoso continúe.' }
+  },
+  {
+    id: 'aggression', icon: '✋', categoryKey: 'category.aggression',
+    title: { pt: 'Empurrão no Corredor', en: 'Shoved in the Hallway', es: 'Empujón en el Pasillo' },
+    text: {
+      pt: 'Você vê um colega sendo empurrado e provocado com tapas por outro estudante mais forte, num corredor vazio.',
+      en: 'You see a classmate being shoved and slapped around by a stronger student in an empty hallway.',
+      es: 'Ves a un compañero siendo empujado y golpeado por un estudiante más fuerte, en un pasillo vacío.'
+    },
+    options: [
+      { correct: false, kind: 'passive', text: { pt: 'Desviar o olhar e continuar andando rápido', en: 'Look away and keep walking quickly', es: 'Mirar hacia otro lado y seguir caminando rápido' } },
+      { correct: false, kind: 'harmful', text: { pt: 'Entrar no meio e tentar bater de volta', en: 'Jump in and try to fight back', es: 'Meterte en medio e intentar devolver los golpes' } },
+      { correct: true, kind: 'good', text: { pt: 'Gritar por ajuda e chamar um funcionário da escola imediatamente', en: 'Shout for help and call a school staff member immediately', es: 'Gritar pidiendo ayuda y llamar a un empleado de la escuela de inmediato' } }
+    ],
+    feedbackCorrect: { pt: 'Pedir ajuda de um adulto rapidamente é mais seguro e eficaz do que reagir com violência.', en: 'Quickly asking an adult for help is safer and more effective than reacting with violence.', es: 'Pedir ayuda a un adulto rápidamente es más seguro y eficaz que reaccionar con violencia.' },
+    feedbackIncorrect: { pt: 'Ignorar coloca a vítima em risco, e responder com violência pode piorar tudo. Peça ajuda.', en: 'Ignoring it puts the victim at risk, and fighting back can make it worse. Ask for help.', es: 'Ignorarlo pone en riesgo a la víctima, y responder con violencia puede empeorarlo todo. Pedí ayuda.' }
+  },
+  {
+    id: 'pressure', icon: '👥', categoryKey: 'category.pressure',
+    title: { pt: 'Pressão do Grupo', en: 'Peer Pressure', es: 'Presión de Grupo' },
+    text: {
+      pt: 'Seus amigos dizem: "ou você ajuda a gente a zoar o novato, ou para de andar com a gente".',
+      en: 'Your friends say: "either you help us mock the new kid, or stop hanging out with us".',
+      es: 'Tus amigos dicen: "o nos ayudás a burlarte del nuevo, o dejás de andar con nosotros".'
+    },
+    options: [
+      { correct: false, kind: 'harmful', text: { pt: 'Participar da zoação para não perder o grupo', en: 'Join the mocking so you don\'t lose the group', es: 'Participar de la burla para no perder al grupo' } },
+      { correct: true, kind: 'good', text: { pt: 'Dizer "não" e se afastar desse tipo de atitude', en: 'Say "no" and walk away from that kind of attitude', es: 'Decir "no" y alejarte de ese tipo de actitud' } },
+      { correct: false, kind: 'passive', text: { pt: 'Ficar quieto e fingir que não ouviu nada', en: 'Stay quiet and pretend you didn\'t hear anything', es: 'Quedarte callado y fingir que no escuchaste nada' } }
+    ],
+    feedbackCorrect: { pt: 'Dizer não a atitudes de bullying, mesmo sob pressão dos amigos, é um ato de coragem.', en: 'Saying no to bullying, even under pressure from friends, is an act of courage.', es: 'Decir no al bullying, incluso bajo presión de amigos, es un acto de valentía.' },
+    feedbackIncorrect: { pt: 'Ceder à pressão ou ficar em silêncio ajuda o bullying a continuar.', en: 'Giving in to pressure or staying silent helps bullying continue.', es: 'Ceder a la presión o quedarte en silencio ayuda a que el bullying continúe.' }
+  }
+];
+
+let dilemmaQueue = [];
+
+function nextDilemma() {
+  if (dilemmaQueue.length === 0) {
+    dilemmaQueue = DILEMMAS.map(function (d) { return d.id; });
+    shuffleArray(dilemmaQueue);
+  }
+  const id = dilemmaQueue.pop();
+  return DILEMMAS.find(function (d) { return d.id === id; });
+}
+
+
+/* =====================================================================
+   4. CONTEÚDO: ITENS DA LOJA
+   ===================================================================== */
+
+const SKINS = [
+  { id: 'default', icon: '🛡️', tint: '#c7d6ff', accent: '#7a8bd6', cost: { coins: 0 },
+    name: { pt: 'Cavaleiro Padrão', en: 'Default Knight', es: 'Caballero Estándar' },
+    desc: { pt: 'O visual clássico de quem está começando a corrida.', en: 'The classic look for runners just starting out.', es: 'El look clásico para quienes empiezan la carrera.' } },
+  { id: 'golden', icon: '👑', tint: '#ffd24c', accent: '#b8860b', cost: { coins: 500 },
+    name: { pt: 'Cavaleiro Dourado', en: 'Golden Knight', es: 'Caballero Dorado' },
+    desc: { pt: 'Armadura reluzente para quem já é veterano.', en: 'Shiny armor for veteran runners.', es: 'Armadura brillante para corredores veteranos.' } },
+  { id: 'ninja', icon: '🥷', tint: '#3a3a4a', accent: '#ff2e9a', cost: { coins: 800 },
+    name: { pt: 'Ninja da Empatia', en: 'Empathy Ninja', es: 'Ninja de la Empatía' },
+    desc: { pt: 'Rápido, silencioso e sempre pronto para ajudar.', en: 'Fast, silent and always ready to help.', es: 'Rápido, silencioso y siempre listo para ayudar.' } },
+  { id: 'astro', icon: '🧑‍🚀', tint: '#9adfff', accent: '#ffffff', cost: { gems: 40 },
+    name: { pt: 'Astronauta', en: 'Astronaut', es: 'Astronauta' },
+    desc: { pt: 'Direto das estrelas para espalhar respeito.', en: 'Straight from the stars to spread respect.', es: 'Directo de las estrellas para difundir respeto.' } },
+  { id: 'robot', icon: '🤖', tint: '#b0b0b8', accent: '#00e5ff', cost: { coins: 1200 },
+    name: { pt: 'Robô Guardião', en: 'Guardian Robot', es: 'Robot Guardián' },
+    desc: { pt: 'Processamento lógico: bullying não é aceitável.', en: 'Logical conclusion: bullying is never okay.', es: 'Conclusión lógica: el bullying nunca está bien.' } },
+  { id: 'princess', icon: '👸', tint: '#ff8fc6', accent: '#ffe600', cost: { gems: 60 },
+    name: { pt: 'Guerreira Real', en: 'Royal Warrior', es: 'Guerrera Real' },
+    desc: { pt: 'Coragem e gentileza no mesmo pacote.', en: 'Courage and kindness in one package.', es: 'Valentía y bondad en un mismo paquete.' } }
+];
+
+const THEMES = [
+  { id: 'arcade', icon: '🕹️', cost: { coins: 0 },
+    name: { pt: 'Arcade', en: 'Arcade', es: 'Arcade' },
+    desc: { pt: 'Neon synthwave clássico.', en: 'Classic neon synthwave.', es: 'Neón synthwave clásico.' } },
+  { id: 'forest', icon: '🌲', cost: { coins: 600 },
+    name: { pt: 'Floresta', en: 'Forest', es: 'Bosque' },
+    desc: { pt: 'Corrida em meio à natureza.', en: 'A run through nature.', es: 'Una carrera entre la naturaleza.' } },
+  { id: 'ocean', icon: '🌊', cost: { gems: 35 },
+    name: { pt: 'Oceano', en: 'Ocean', es: 'Océano' },
+    desc: { pt: 'Tons profundos do mar.', en: 'Deep tones of the sea.', es: 'Tonos profundos del mar.' } },
+  { id: 'sunset', icon: '🌅', cost: { coins: 900 },
+    name: { pt: 'Pôr do Sol', en: 'Sunset', es: 'Atardecer' },
+    desc: { pt: 'Cores quentes do entardecer.', en: 'Warm evening colors.', es: 'Colores cálidos del atardecer.' } }
+];
+
+const POWERUP_SHOP_ITEMS = [
+  { id: 'shield', icon: '🛡️', name: { pt: 'Escudo', en: 'Shield', es: 'Escudo' } },
+  { id: 'speed', icon: '⚡', name: { pt: 'Velocidade', en: 'Speed', es: 'Velocidad' } },
+  { id: 'magnet', icon: '🧲', name: { pt: 'Ímã', en: 'Magnet', es: 'Imán' } },
+  { id: 'slow', icon: '🌀', name: { pt: 'Lentidão', en: 'Slow-mo', es: 'Lentitud' } },
+  { id: 'jetpack', icon: '🚀', name: { pt: 'Jetpack', en: 'Jetpack', es: 'Jetpack' } }
+];
+
+const POWERUP_UPGRADE_COSTS = {
+  shield: [{ coins: 300 }, { coins: 700 }, { gems: 30 }],
+  speed: [{ coins: 250 }, { coins: 600 }, { gems: 25 }],
+  magnet: [{ coins: 280 }, { coins: 650 }, { gems: 28 }],
+  slow: [{ coins: 260 }, { coins: 620 }, { gems: 26 }],
+  jetpack: [{ coins: 400 }, { coins: 900 }, { gems: 45 }]
 };
 
-/* ===== Themes ===== */
-const THEMES = {
-  arcade: { primary:\"#ff5577\", accent:\"#ffd166\", track:\"#1a1230\", track2:\"#221842\", sky:\"#0a0420\" },
-  forest: { primary:\"#3ddc84\", accent:\"#ffd166\", track:\"#0f2317\", track2:\"#15351f\", sky:\"#0a1810\" },
-  ocean:  { primary:\"#5fd6ff\", accent:\"#ffe066\", track:\"#0a1d3a\", track2:\"#102a52\", sky:\"#04102a\" },
-  sunset: { primary:\"#ff9966\", accent:\"#ffe066\", track:\"#2a0e2a\", track2:\"#3d1a3d\", sky:\"#15061a\" }
-};
-const CB_FILTERS = { off:\"none\", deuteranopia:\"url(#cb-deut)\", protanopia:\"url(#cb-prot)\", tritanopia:\"url(#cb-trit)\" };
 
-/* ===== State ===== */
-const state = {
-  lang: localStorage.getItem(\"lang\") || \"pt\",
-  theme: localStorage.getItem(\"theme\") || \"arcade\",
-  colorblind: localStorage.getItem(\"colorblind\") || \"off\",
-  user: null,
-  token: localStorage.getItem(\"auth_token\") || null,
-  best: 0
-};
+/* =====================================================================
+   5. ESTADO E PERSISTÊNCIA
+   ===================================================================== */
 
-/* ===== Audio (Web Audio API) ===== */
-let actx;
-function aCtx(){ if(!actx){const C=window.AudioContext||window.webkitAudioContext; if(C) actx=new C();} if(actx&&actx.state===\"suspended\") actx.resume(); return actx; }
-function tone(f,d=.1,t=\"square\",g=.08,w=0){
-  const ctx=aCtx(); if(!ctx) return;
-  const T=ctx.currentTime+w, o=ctx.createOscillator(), gn=ctx.createGain();
-  o.type=t; o.frequency.setValueAtTime(f,T);
-  gn.gain.setValueAtTime(0,T); gn.gain.linearRampToValueAtTime(g,T+.005);
-  gn.gain.exponentialRampToValueAtTime(.0001,T+d);
-  o.connect(gn).connect(ctx.destination); o.start(T); o.stop(T+d+.02);
-}
-const SFX = {
-  click:()=>tone(520,.05,\"square\",.05),
-  jump:()=>tone(660,.08,\"square\",.06),
-  hit: ()=>{ tone(220,.18,\"sawtooth\",.12); tone(110,.25,\"sawtooth\",.08,.05); },
-  correct: ()=>{ tone(660,.08,\"square\",.08); tone(880,.1,\"square\",.08,.08); tone(1320,.15,\"square\",.08,.16); },
-  wrong: ()=>{ tone(330,.12,\"sawtooth\",.1); tone(220,.18,\"sawtooth\",.1,.1); },
-  question: ()=>tone(880,.12,\"triangle\",.08)
-};
-function playVictory(){
-  const notes=[[523.25,0,.18],[659.25,.18,.18],[783.99,.36,.18],[1046.5,.54,.28],[880,.86,.16],[1046.5,1.02,.16],[1318.5,1.18,.4],[1568,1.6,.45],[1318.5,2.05,.18],[1046.5,2.23,.18],[1318.5,2.41,.5]];
-  notes.forEach(([f,w,d])=>tone(f,d,\"triangle\",.1,w));
-  const bass=[[130.81,0,.5],[196,.55,.5],[261.63,1.1,.5],[196,1.65,.5],[261.63,2.2,.7]];
-  bass.forEach(([f,w,d])=>tone(f,d,\"sine\",.12,w));
-}
-
-/* ===== UI helpers ===== */
-function $(sel){ return document.querySelector(sel); }
-function $$(sel){ return document.querySelectorAll(sel); }
-function show(id){
-  $$(\".screen\").forEach(s=>s.classList.remove(\"active\"));
-  $(\"#\"+id).classList.add(\"active\");
-}
-function t(k){ return I18N[state.lang]?.[k] || I18N.en[k] || k; }
-function applyI18n(){
-  $$(\"[data-i18n]\").forEach(el=>{ el.textContent = t(el.dataset.i18n); });
-  document.documentElement.lang = state.lang;
-}
-function applyTheme(){
-  const T = THEMES[state.theme] || THEMES.arcade;
-  const r = document.documentElement.style;
-  r.setProperty(\"--game-primary\", T.primary);
-  r.setProperty(\"--game-accent\", T.accent);
-  r.setProperty(\"--game-track\", T.track);
-  r.setProperty(\"--game-track2\", T.track2);
-  r.setProperty(\"--game-sky\", T.sky);
-  r.setProperty(\"--cb-filter\", CB_FILTERS[state.colorblind]);
-}
-function toast(msg, type=\"success\"){
-  const el = $(\"#toast\"); el.textContent = msg;
-  el.className = \"toast show \" + type;
-  setTimeout(()=>{ el.className = \"toast\"; }, 2200);
-}
-
-/* ===== API (optional backend) ===== */
-async function api(path, opts={}){
-  if(!API_BASE) throw new Error(\"no_backend\");
-  const headers = {\"Content-Type\":\"application/json\", ...(opts.headers||{})};
-  if(state.token) headers.Authorization = \"Bearer \" + state.token;
-  const res = await fetch(API_BASE + path, { credentials:\"include\", ...opts, headers });
-  if(!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || \"Erro\");
-  return res.json();
-}
-
-async function loadUser(){
-  if(!API_BASE || !state.token){ updateAuthUI(); return; }
-  try { state.user = await api(\"/api/auth/me\"); }
-  catch { state.user = null; state.token = null; localStorage.removeItem(\"auth_token\"); }
-  updateAuthUI();
-}
-
-function updateAuthUI(){
-  if(state.user){
-    $(\"#userBadge\").textContent = state.user.name;
-    $(\"#userBadge\").classList.remove(\"hidden\");
-    $$(\"[data-action='open-login'],[data-action='open-register']\").forEach(b=>b.classList.add(\"hidden\"));
-    $(\"#logoutBtn\").classList.remove(\"hidden\");
-    $(\"#loginPrompt\").classList.add(\"hidden\");
-  } else {
-    $(\"#userBadge\").classList.add(\"hidden\");
-    $$(\"[data-action='open-login'],[data-action='open-register']\").forEach(b=>b.classList.remove(\"hidden\"));
-    $(\"#logoutBtn\").classList.add(\"hidden\");
-    $(\"#loginPrompt\").classList.remove(\"hidden\");
-  }
-}
-
-/* ===== Best score / leaderboard ===== */
-async function loadBest(){
-  if(API_BASE && state.token){
-    try { const r = await api(\"/api/scores/me\"); state.best = r.score || 0; }
-    catch { state.best = 0; }
-  } else {
-    state.best = parseInt(localStorage.getItem(\"local_best\")||\"0\", 10);
-  }
-  $(\"#menuBest\").textContent = state.best;
-  $(\"#hudBest\").textContent = state.best;
-}
-async function submitScore(score, correct, lives){
-  const isNew = score > state.best;
-  if(isNew){
-    if(!API_BASE || !state.token) localStorage.setItem(\"local_best\", String(score));
-    state.best = score;
-  }
-  if(API_BASE && state.token){
-    try {
-      const r = await api(\"/api/scores\", { method:\"POST\", body: JSON.stringify({ score, lives_left:lives, questions_correct:correct }) });
-      if(r.new_record){ state.best = score; }
-      return r.new_record || isNew;
-    } catch {}
-  }
-  return isNew;
-}
-async function loadLeaderboard(){
-  const list = $(\"#lbList\"); list.innerHTML = \"\";
-  let rows = [];
-  if(API_BASE){
-    try { rows = await api(\"/api/scores/leaderboard\"); } catch {}
-  }
-  if(rows.length === 0){
-    // Local fallback
-    const local = parseInt(localStorage.getItem(\"local_best\")||\"0\",10);
-    if(local>0) rows = [{name:\"Você\", score:local, user_id:\"local\"}];
-  }
-  if(rows.length === 0){
-    $(\"#lbEmpty\").classList.remove(\"hidden\"); return;
-  }
-  $(\"#lbEmpty\").classList.add(\"hidden\");
-  rows.forEach((r,i)=>{
-    const icon = i===0?\"🏆\":i===1?\"🥈\":i===2?\"🥉\":(i+1);
-    const li = document.createElement(\"li\");
-    li.innerHTML = `<span><span class=\"rank\">${icon}</span><span class=\"name\">${r.name}</span></span><span class=\"score\">${r.score}</span>`;
-    list.appendChild(li);
-  });
-}
-
-/* ===== Game ===== */
-const game = {
-  canvas:null, ctx:null, raf:0,
-  W:0, H:0, laneX:[0,0,0],
-  hero: { lane:1, x:0, y:0, vy:0, jumping:false, frame:0, ft:0 },
-  obstacles:[], spawnTimer:0,
-  qSpawn:0, qIndex:0, questions:[],
-  score:0, lives:3, correct:0,
-  time:0, speed:5, stripe:0, shake:0,
-  paused:false, ended:false, qOpen:false,
-  cloud:0
-};
-function resetGame(){
-  Object.assign(game, {
-    obstacles:[], spawnTimer:0, qSpawn:0, qIndex:0,
-    questions: shuffle(QUESTIONS[state.lang]||QUESTIONS.en).slice(0,6),
-    score:0, lives:3, correct:0, time:0, speed:5,
-    stripe:0, shake:0, paused:false, ended:false, qOpen:false, cloud:0,
-    hero:{ lane:1, x:0, y:0, vy:0, jumping:false, frame:0, ft:0 }
-  });
-}
-function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-function resizeCanvas(){
-  const c = game.canvas; if(!c) return;
-  const p = c.parentElement;
-  const w = p.clientWidth, h = p.clientHeight;
-  const dpr = window.devicePixelRatio || 1;
-  c.width = w * dpr; c.height = h * dpr;
-  c.style.width = w+\"px\"; c.style.height = h+\"px\";
-  game.ctx.setTransform(dpr,0,0,dpr,0,0);
-  game.W = w; game.H = h;
-  const spacing = w/5;
-  game.laneX = [ w/2 - spacing, w/2, w/2 + spacing ];
-  game.hero.y = h*0.78;
-  game.hero.x = game.laneX[game.hero.lane];
-}
-
-function startGame(){
-  show(\"game\");
-  if(!game.canvas){
-    game.canvas = $(\"#gameCanvas\");
-    game.ctx = game.canvas.getContext(\"2d\");
-    window.addEventListener(\"resize\", resizeCanvas);
-  }
-  resetGame();
-  setTimeout(()=>{ resizeCanvas(); aCtx(); }, 50);
-  $(\"#endOverlay\").classList.add(\"hidden\");
-  $(\"#pauseOverlay\").classList.add(\"hidden\");
-  $(\"#questionOverlay\").classList.add(\"hidden\");
-  cancelAnimationFrame(game.raf);
-  let last = performance.now();
-  const loop = (now)=>{
-    const dt = Math.min(40, now - last)/16.666; last = now;
-    update(dt); draw();
-    game.raf = requestAnimationFrame(loop);
+function defaultState() {
+  return {
+    playerName: '',
+    hasLoggedIn: false,
+    coins: 150,
+    gems: 5,
+    totalXP: 0,
+    bestScore: 0,
+    ownedSkins: ['default'],
+    equippedSkin: 'default',
+    ownedThemes: ['arcade'],
+    powerLevels: { shield: 0, speed: 0, magnet: 0, slow: 0, jetpack: 0 },
+    settings: { lang: 'pt', theme: 'arcade', musicVolume: 70, sfxVolume: 80, muted: false }
   };
-  game.raf = requestAnimationFrame(loop);
 }
 
-function update(dt){
-  if(game.paused || game.ended || game.qOpen) return;
-  const g = game;
-  g.time += dt;
-  g.speed = 5.2 + Math.min(8, g.time/80);
-  g.stripe = (g.stripe + g.speed*3) % 80;
-  g.cloud = (g.cloud + 0.3) % g.W;
-  g.score += dt * 0.6;
+let state = defaultState();
 
-  // hero
-  const tx = g.laneX[g.hero.lane];
-  g.hero.x += (tx - g.hero.x) * 0.25;
-  if(g.hero.jumping){
-    g.hero.vy += 0.7;
-    g.hero.y += g.hero.vy;
-    if(g.hero.y >= g.H*0.78){ g.hero.y = g.H*0.78; g.hero.jumping=false; g.hero.vy=0; }
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_STATE);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = Object.assign(defaultState(), parsed);
+      state.settings = Object.assign(defaultState().settings, parsed.settings || {});
+      state.powerLevels = Object.assign(defaultState().powerLevels, parsed.powerLevels || {});
+    }
+  } catch (e) {
+    state = defaultState();
   }
-  g.hero.ft += dt;
-  if(g.hero.ft > 4){ g.hero.frame = (g.hero.frame+1)%4; g.hero.ft = 0; }
+}
 
-  // spawn obstacles
-  g.spawnTimer -= dt;
-  if(g.spawnTimer <= 0){
-    const lane = Math.floor(Math.random()*3);
-    const type = Math.random()<.25 ? \"low\" : \"block\";
-    g.obstacles.push({ lane, x:g.laneX[lane], y:g.H*0.35, type, depth:0, size:30 });
-    g.spawnTimer = 35 + Math.random()*35;
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(state));
+  } catch (e) { /* armazenamento indisponível — ignora silenciosamente */ }
+}
+
+function loadRanking() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_RANKING);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
   }
-  for(const o of g.obstacles){
-    o.depth += dt * (0.012 + g.speed*0.0008);
-    const td = Math.min(1, o.depth);
-    o.y = g.H*0.35 + (g.H*0.78 - g.H*0.35) * td;
-    o.x = g.W/2 + (g.laneX[o.lane] - g.W/2) * (0.3 + 0.7*td);
-    o.size = 30 + 70*td;
+}
+
+function saveRanking(rankingObj) {
+  try {
+    localStorage.setItem(STORAGE_KEY_RANKING, JSON.stringify(rankingObj));
+  } catch (e) { /* ignora */ }
+}
+
+function submitScore(name, score, level) {
+  if (!name) name = 'Jogador';
+  const ranking = loadRanking();
+  const existing = ranking[name];
+  if (!existing || score > existing.score) {
+    ranking[name] = { score: score, level: level, date: Date.now() };
+    saveRanking(ranking);
+    return true;
   }
-  for(let i=g.obstacles.length-1; i>=0; i--){
-    const o = g.obstacles[i];
-    if(o.depth >= 1.05){ g.obstacles.splice(i,1); continue; }
-    if(o.depth > 0.85 && o.lane === g.hero.lane && !g.hero.jumping){
-      g.obstacles.splice(i,1);
-      g.lives -= 1; g.shake = 12; SFX.hit();
-      if(g.lives <= 0) endGame();
+  return false;
+}
+
+function getSortedRanking() {
+  const ranking = loadRanking();
+  return Object.keys(ranking).map(function (name) {
+    return { name: name, score: ranking[name].score, level: ranking[name].level };
+  }).sort(function (a, b) { return b.score - a.score; });
+}
+
+function resetAllProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_STATE);
+    localStorage.removeItem(STORAGE_KEY_RANKING);
+  } catch (e) { /* ignora */ }
+  state = defaultState();
+  location.reload();
+}
+
+
+/* =====================================================================
+   6. ÁUDIO (WEB AUDIO API)
+   ===================================================================== */
+
+let audioCtx = null;
+let masterGain = null;
+let musicGainNode = null;
+let sfxGainNode = null;
+let musicTimer = null;
+let musicStep = 0;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = new AC();
+    masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+    musicGainNode = audioCtx.createGain();
+    musicGainNode.connect(masterGain);
+    sfxGainNode = audioCtx.createGain();
+    sfxGainNode.connect(masterGain);
+    applyAudioVolumes();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(function () {});
+  }
+}
+
+function applyAudioVolumes() {
+  if (!audioCtx) return;
+  const muted = state.settings.muted;
+  masterGain.gain.value = muted ? 0 : 1;
+  musicGainNode.gain.value = (state.settings.musicVolume / 100) * 0.5;
+  sfxGainNode.gain.value = state.settings.sfxVolume / 100;
+}
+
+function playTone(freq, type, duration, destGain, startOffset, peakGain) {
+  if (!audioCtx) return;
+  startOffset = startOffset || 0;
+  peakGain = peakGain === undefined ? 0.3 : peakGain;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  const now = audioCtx.currentTime + startOffset;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(peakGain, now + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(gain);
+  gain.connect(destGain);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+
+function playSweep(freqStart, freqEnd, type, duration, destGain, peakGain) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  const now = audioCtx.currentTime;
+  osc.frequency.setValueAtTime(freqStart, now);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), now + duration);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(peakGain || 0.3, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(gain);
+  gain.connect(destGain);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+
+function playNoise(duration, destGain, peakGain) {
+  if (!audioCtx) return;
+  const bufferSize = Math.floor(audioCtx.sampleRate * duration);
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.value = peakGain || 0.3;
+  noise.connect(gain);
+  gain.connect(destGain);
+  noise.start();
+}
+
+function sfxJump() { ensureAudio(); if (sfxGainNode) playSweep(280, 620, 'square', 0.18, sfxGainNode, 0.22); }
+function sfxCollect() { ensureAudio(); if (sfxGainNode) playTone(880, 'sine', 0.12, sfxGainNode, 0, 0.25); }
+function sfxGem() { ensureAudio(); if (sfxGainNode) { playTone(1046, 'sine', 0.1, sfxGainNode, 0, 0.22); playTone(1318, 'sine', 0.14, sfxGainNode, 0.06, 0.2); } }
+function sfxCorrect() { ensureAudio(); if (sfxGainNode) { playTone(523, 'triangle', 0.12, sfxGainNode, 0, 0.25); playTone(659, 'triangle', 0.12, sfxGainNode, 0.1, 0.25); playTone(880, 'triangle', 0.2, sfxGainNode, 0.2, 0.25); } }
+function sfxWrong() { ensureAudio(); if (sfxGainNode) playSweep(300, 90, 'sawtooth', 0.35, sfxGainNode, 0.22); }
+function sfxCollision() { ensureAudio(); if (sfxGainNode) { playNoise(0.22, sfxGainNode, 0.35); playTone(80, 'square', 0.18, sfxGainNode, 0, 0.3); } }
+function sfxPowerup() { ensureAudio(); if (sfxGainNode) playSweep(220, 900, 'square', 0.3, sfxGainNode, 0.2); }
+function sfxClick() { ensureAudio(); if (sfxGainNode) playTone(700, 'square', 0.05, sfxGainNode, 0, 0.12); }
+function sfxLevelUp() { ensureAudio(); if (sfxGainNode) { [523, 659, 784, 1046].forEach(function (f, i) { playTone(f, 'triangle', 0.18, sfxGainNode, i * 0.09, 0.25); }); } }
+function sfxShieldBreak() { ensureAudio(); if (sfxGainNode) { playNoise(0.18, sfxGainNode, 0.25); playTone(1200, 'sine', 0.1, sfxGainNode, 0, 0.2); } }
+
+const MUSIC_BASS = [110, 110, 130.81, 98, 110, 110, 146.83, 130.81];
+const MUSIC_ARP = [440, 523, 659, 523, 392, 523, 659, 783.99];
+
+function musicTick() {
+  if (!audioCtx || !musicGainNode) return;
+  const bassFreq = MUSIC_BASS[musicStep % MUSIC_BASS.length];
+  const arpFreq = MUSIC_ARP[musicStep % MUSIC_ARP.length];
+  playTone(bassFreq, 'triangle', 0.32, musicGainNode, 0, 0.5);
+  if (musicStep % 2 === 0) {
+    playTone(arpFreq, 'sine', 0.22, musicGainNode, 0.05, 0.18);
+  }
+  if (musicStep % 4 === 2) {
+    playNoise(0.06, musicGainNode, 0.12);
+  }
+  musicStep++;
+}
+
+function startMusic() {
+  ensureAudio();
+  if (!audioCtx || musicTimer) return;
+  musicStep = 0;
+  musicTimer = setInterval(musicTick, 260);
+}
+
+function stopMusic() {
+  if (musicTimer) {
+    clearInterval(musicTimer);
+    musicTimer = null;
+  }
+}
+
+
+/* =====================================================================
+   7. UTILITÁRIOS GERAIS
+   ===================================================================== */
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function randRange(a, b) { return a + Math.random() * (b - a); }
+function randInt(a, b) { return Math.floor(randRange(a, b + 1)); }
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+function $(id) { return document.getElementById(id); }
+
+function formatCost(cost) {
+  const parts = [];
+  if (cost.coins) parts.push('🪙 ' + cost.coins);
+  if (cost.gems) parts.push('💎 ' + cost.gems);
+  if (!cost.coins && !cost.gems) parts.push('—');
+  return parts.join('  ');
+}
+
+function canAfford(cost) {
+  return state.coins >= (cost.coins || 0) && state.gems >= (cost.gems || 0);
+}
+
+function spendCurrency(cost) {
+  state.coins -= (cost.coins || 0);
+  state.gems -= (cost.gems || 0);
+  updateCurrencyDisplays();
+}
+
+
+/* =====================================================================
+   8. INTERNACIONALIZAÇÃO — APLICAÇÃO NO DOM
+   ===================================================================== */
+
+function applyI18nAll() {
+  document.documentElement.lang = state.settings.lang;
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    if (DYNAMIC_I18N_SKIP.has(el.id)) return;
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  $('input-login-name') && ($('input-login-name').placeholder = t('login.placeholder'));
+  updatePlayerLevelLabel();
+  renderShopSkins();
+  renderShopPowerups();
+  renderShopThemes();
+  renderRanking();
+  document.querySelectorAll('#lang-options .settings-option').forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === state.settings.lang);
+  });
+}
+
+function updatePlayerLevelLabel() {
+  const level = computeLevel(state.totalXP);
+  const el = $('menu-player-level');
+  if (el) el.textContent = t('menu.level', { n: level });
+}
+
+
+/* =====================================================================
+   9. NAVEGAÇÃO ENTRE TELAS
+   ===================================================================== */
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function (s) {
+    if (s.id === id) {
+      s.classList.remove('hidden');
+      s.classList.add('active');
+    } else {
+      s.classList.add('hidden');
+      s.classList.remove('active');
+    }
+  });
+  const toolbar = $('global-toolbar');
+  if (toolbar) toolbar.classList.toggle('hidden', id === 'screen-loading');
+}
+
+function bindNavigation() {
+  $('btn-play').addEventListener('click', function () { sfxClick(); startNewRun(); });
+  $('btn-shop').addEventListener('click', function () { sfxClick(); showScreen('screen-shop'); });
+  $('btn-ranking').addEventListener('click', function () { sfxClick(); renderRanking(); showScreen('screen-ranking'); });
+  $('btn-settings').addEventListener('click', function () { sfxClick(); showScreen('screen-settings'); });
+  $('btn-howto').addEventListener('click', function () { sfxClick(); showScreen('screen-howto'); });
+  $('btn-howto-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
+  $('btn-shop-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
+  $('btn-settings-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
+  $('btn-ranking-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
+  $('btn-edit-name').addEventListener('click', function () { sfxClick(); showScreen('screen-settings'); });
+
+  $('btn-mute').addEventListener('click', function () {
+    ensureAudio();
+    state.settings.muted = !state.settings.muted;
+    $('btn-mute').setAttribute('data-state', state.settings.muted ? 'muted' : 'unmuted');
+    applyAudioVolumes();
+    saveState();
+  });
+
+  $('btn-fullscreen').addEventListener('click', function () {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function () {});
+    } else {
+      document.exitFullscreen && document.exitFullscreen().catch(function () {});
+    }
+  });
+}
+
+
+/* =====================================================================
+   10. TELA: LOADING
+   ===================================================================== */
+
+function runLoadingSequence(onDone) {
+  const fill = $('loading-bar-fill');
+  const percentLabel = $('loading-bar-percent');
+  const statusLabel = $('loading-status');
+  const tipLabel = $('loading-tip');
+  const tips = [t('loading.tip')];
+  let progress = 0;
+
+  const interval = setInterval(function () {
+    progress += randRange(6, 14);
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      setTimeout(onDone, 280);
+    }
+    fill.style.width = progress + '%';
+    percentLabel.textContent = Math.floor(progress) + '%';
+    $('loading-progressbar').setAttribute('aria-valuenow', String(Math.floor(progress)));
+  }, 140);
+
+  statusLabel.textContent = t('loading.status');
+  tipLabel.textContent = tips[0];
+}
+
+
+/* =====================================================================
+   11. TELA: MENU
+   ===================================================================== */
+
+function refreshMenuScreen() {
+  $('menu-player-name').textContent = state.playerName || 'Jogador';
+  updatePlayerLevelLabel();
+  updateCurrencyDisplays();
+  updateMenuXPBar();
+}
+
+function updateCurrencyDisplays() {
+  ['menu-coins-amount', 'shop-coins-amount'].forEach(function (id) { var el = $(id); if (el) el.textContent = Math.floor(state.coins); });
+  ['menu-gems-amount', 'shop-gems-amount'].forEach(function (id) { var el = $(id); if (el) el.textContent = Math.floor(state.gems); });
+  var hudCoins = $('hud-coins'); if (hudCoins) hudCoins.textContent = Math.floor(state.coins);
+  var hudGems = $('hud-gems'); if (hudGems) hudGems.textContent = Math.floor(state.gems);
+}
+
+function computeLevel(totalXP) {
+  const xp = clamp(totalXP, 0, CONFIG.XP_PER_LEVEL * CONFIG.MAX_LEVEL);
+  return Math.min(CONFIG.MAX_LEVEL, Math.floor(xp / CONFIG.XP_PER_LEVEL) + 1);
+}
+
+function updateMenuXPBar() {
+  const level = computeLevel(state.totalXP);
+  const xpIntoLevel = clamp(state.totalXP, 0, CONFIG.XP_PER_LEVEL * CONFIG.MAX_LEVEL) - (level - 1) * CONFIG.XP_PER_LEVEL;
+  const pct = level >= CONFIG.MAX_LEVEL ? 100 : clamp((xpIntoLevel / CONFIG.XP_PER_LEVEL) * 100, 0, 100);
+  $('menu-xp-fill').style.width = pct + '%';
+  $('menu-xp-label').textContent = (level >= CONFIG.MAX_LEVEL ? CONFIG.XP_PER_LEVEL : xpIntoLevel) + ' / ' + CONFIG.XP_PER_LEVEL + ' XP';
+}
+
+
+/* =====================================================================
+   12. TELA: COMO JOGAR — sem lógica adicional (apenas conteúdo estático)
+   ===================================================================== */
+
+
+/* =====================================================================
+   13. TELA: LOJA
+   ===================================================================== */
+
+function bindShopTabs() {
+  document.querySelectorAll('.shop-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      sfxClick();
+      document.querySelectorAll('.shop-tab').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+      document.querySelectorAll('.shop-panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      $('panel-' + tab.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+}
+
+function buildShopCard(opts) {
+  const tpl = $('template-shop-card');
+  const node = tpl.content.firstElementChild.cloneNode(true);
+  node.querySelector('.shop-card-icon').textContent = opts.icon;
+  node.querySelector('.shop-card-name').textContent = opts.name;
+  node.querySelector('.shop-card-desc').textContent = opts.desc;
+  const buyBtn = node.querySelector('.shop-card-buy');
+  buyBtn.querySelector('.buy-icon').textContent = opts.buyIcon;
+  buyBtn.querySelector('.buy-price').textContent = opts.buyLabel;
+  if (opts.owned) node.classList.add('owned');
+  if (opts.equipped) node.classList.add('equipped');
+  if (opts.buyClass) buyBtn.classList.add(opts.buyClass);
+  buyBtn.disabled = !!opts.disabled;
+  buyBtn.addEventListener('click', opts.onClick);
+  return node;
+}
+
+function renderShopSkins() {
+  const grid = $('shop-grid-skins');
+  if (!grid) return;
+  grid.innerHTML = '';
+  SKINS.forEach(function (skin) {
+    const owned = state.ownedSkins.indexOf(skin.id) !== -1;
+    const equipped = state.equippedSkin === skin.id;
+    let buyLabel, buyClass, disabled;
+    if (equipped) { buyLabel = t('shop.equipped'); buyClass = 'is-equipped'; disabled = true; }
+    else if (owned) { buyLabel = t('shop.equip'); buyClass = 'is-owned'; disabled = false; }
+    else { buyLabel = formatCost(skin.cost); buyClass = ''; disabled = !canAfford(skin.cost); }
+    const card = buildShopCard({
+      icon: skin.icon,
+      name: skin.name[state.settings.lang],
+      desc: skin.desc[state.settings.lang],
+      buyIcon: owned ? '' : '🪙',
+      buyLabel: buyLabel,
+      owned: owned, equipped: equipped, buyClass: buyClass, disabled: disabled,
+      onClick: function () { sfxClick(); buySkin(skin.id); }
+    });
+    grid.appendChild(card);
+  });
+}
+
+function buySkin(skinId) {
+  const skin = SKINS.find(function (s) { return s.id === skinId; });
+  if (!skin) return;
+  if (state.ownedSkins.indexOf(skinId) !== -1) {
+    state.equippedSkin = skinId;
+    saveState();
+    renderShopSkins();
+    return;
+  }
+  if (!canAfford(skin.cost)) return;
+  spendCurrency(skin.cost);
+  state.ownedSkins.push(skinId);
+  state.equippedSkin = skinId;
+  saveState();
+  renderShopSkins();
+}
+
+function renderShopThemes() {
+  const grid = $('shop-grid-themes');
+  if (!grid) return;
+  grid.innerHTML = '';
+  THEMES.forEach(function (theme) {
+    const owned = state.ownedThemes.indexOf(theme.id) !== -1;
+    const equipped = state.settings.theme === theme.id;
+    let buyLabel, buyClass, disabled;
+    if (equipped) { buyLabel = t('shop.equipped'); buyClass = 'is-equipped'; disabled = true; }
+    else if (owned) { buyLabel = t('shop.equip'); buyClass = 'is-owned'; disabled = false; }
+    else { buyLabel = formatCost(theme.cost); buyClass = ''; disabled = !canAfford(theme.cost); }
+    const card = buildShopCard({
+      icon: theme.icon,
+      name: theme.name[state.settings.lang],
+      desc: theme.desc[state.settings.lang],
+      buyIcon: owned ? '' : '🪙',
+      buyLabel: buyLabel,
+      owned: owned, equipped: equipped, buyClass: buyClass, disabled: disabled,
+      onClick: function () { sfxClick(); buyTheme(theme.id); }
+    });
+    grid.appendChild(card);
+  });
+}
+
+function buyTheme(themeId) {
+  const theme = THEMES.find(function (t2) { return t2.id === themeId; });
+  if (!theme) return;
+  if (state.ownedThemes.indexOf(themeId) === -1) {
+    if (!canAfford(theme.cost)) return;
+    spendCurrency(theme.cost);
+    state.ownedThemes.push(themeId);
+  }
+  applyTheme(themeId);
+  saveState();
+  renderShopThemes();
+}
+
+function renderShopPowerups() {
+  const grid = $('shop-grid-powerups');
+  if (!grid) return;
+  grid.innerHTML = '';
+  POWERUP_SHOP_ITEMS.forEach(function (item) {
+    const level = state.powerLevels[item.id] || 0;
+    const maxed = level >= 3;
+    const costs = POWERUP_UPGRADE_COSTS[item.id];
+    const nextCost = maxed ? null : costs[level];
+    const desc = t('shop.level') + ' ' + level + '/3 — ' + level + ' ' + t('shop.startCharges');
+    const buyLabel = maxed ? t('shop.maxlevel') : formatCost(nextCost);
+    const card = buildShopCard({
+      icon: item.icon,
+      name: item.name[state.settings.lang],
+      desc: desc,
+      buyIcon: maxed ? '' : '🪙',
+      buyLabel: buyLabel,
+      owned: level > 0, equipped: maxed, buyClass: maxed ? 'is-equipped' : '',
+      disabled: maxed || !canAfford(nextCost || {}),
+      onClick: function () { sfxClick(); buyPowerLevel(item.id); }
+    });
+    grid.appendChild(card);
+  });
+}
+
+function buyPowerLevel(type) {
+  const level = state.powerLevels[type] || 0;
+  if (level >= 3) return;
+  const cost = POWERUP_UPGRADE_COSTS[type][level];
+  if (!canAfford(cost)) return;
+  spendCurrency(cost);
+  state.powerLevels[type] = level + 1;
+  saveState();
+  renderShopPowerups();
+}
+
+
+/* =====================================================================
+   14. TELA: CONFIGURAÇÕES
+   ===================================================================== */
+
+function bindSettingsScreen() {
+  $('input-player-name').value = state.playerName || '';
+
+  $('btn-save-name').addEventListener('click', function () {
+    const val = $('input-player-name').value.trim().slice(0, 16);
+    if (val) {
+      state.playerName = val;
+      state.hasLoggedIn = true;
+      saveState();
+      refreshMenuScreen();
+      sfxCorrect();
+    }
+  });
+
+  document.querySelectorAll('#lang-options .settings-option').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sfxClick();
+      applyLanguage(btn.getAttribute('data-lang'));
+    });
+  });
+
+  document.querySelectorAll('#theme-options .settings-option').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sfxClick();
+      const themeId = btn.getAttribute('data-theme');
+      if (state.ownedThemes.indexOf(themeId) === -1) {
+        showScreen('screen-shop');
+        document.querySelector('[data-tab="themes"]').click();
+        return;
+      }
+      applyTheme(themeId);
+      saveState();
+    });
+  });
+
+  $('slider-music').value = state.settings.musicVolume;
+  $('slider-sfx').value = state.settings.sfxVolume;
+
+  $('slider-music').addEventListener('input', function (e) {
+    state.settings.musicVolume = Number(e.target.value);
+    applyAudioVolumes();
+    saveState();
+  });
+
+  $('slider-sfx').addEventListener('input', function (e) {
+    state.settings.sfxVolume = Number(e.target.value);
+    applyAudioVolumes();
+    saveState();
+  });
+
+  $('btn-reset-data').addEventListener('click', function () {
+    if (window.confirm(t('settings.reset.confirm'))) {
+      resetAllProgress();
+    }
+  });
+}
+
+function applyTheme(themeId) {
+  document.body.setAttribute('data-theme', themeId);
+  state.settings.theme = themeId;
+  refreshThemeColorCache();
+  document.querySelectorAll('#theme-options .settings-option').forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-theme') === themeId);
+  });
+  renderShopThemes();
+}
+
+function applyLanguage(langId) {
+  state.settings.lang = langId;
+  document.body.setAttribute('data-lang', langId);
+  saveState();
+  applyI18nAll();
+}
+
+
+/* =====================================================================
+   15. TELA: RANKING (TOP RUN)
+   ===================================================================== */
+
+function renderRanking() {
+  const sorted = getSortedRanking();
+  const podiumEl = $('ranking-podium');
+  const listEl = $('ranking-list');
+  const emptyEl = $('ranking-empty');
+  listEl.innerHTML = '';
+
+  if (sorted.length === 0) {
+    podiumEl.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+  podiumEl.classList.remove('hidden');
+  emptyEl.classList.add('hidden');
+
+  for (let i = 0; i < 3; i++) {
+    const entry = sorted[i];
+    $('podium-' + (i + 1) + '-name').textContent = entry ? entry.name : '—';
+    $('podium-' + (i + 1) + '-score').textContent = entry ? entry.score : 0;
+  }
+
+  const rest = sorted.slice(3, CONFIG.RANKING_MAX_VISIBLE);
+  const tpl = $('template-ranking-row');
+  rest.forEach(function (entry, idx) {
+    const row = tpl.content.firstElementChild.cloneNode(true);
+    row.querySelector('.ranking-position').textContent = '#' + (idx + 4);
+    row.querySelector('.ranking-name').textContent = entry.name;
+    row.querySelector('.ranking-level').textContent = t('menu.level', { n: entry.level });
+    row.querySelector('.ranking-score').textContent = entry.score;
+    if (entry.name === state.playerName) row.classList.add('is-current-player');
+    listEl.appendChild(row);
+  });
+}
+
+
+/* =====================================================================
+   16. MOTOR DO JOGO — CANVAS, FÍSICA, ENTIDADES, RENDER
+   ===================================================================== */
+
+let canvas, ctx;
+let canvasW = 0, canvasH = 0;
+let trackGeo = {};
+let themeColors = {};
+
+let runState = null; // criado em startNewRun()
+let rafId = null;
+let lastFrameTime = 0;
+let accumulator = 0;
+
+const OBSTACLE_TYPES = ['train', 'barrier', 'beam'];
+const PICKUP_WEIGHTED = ['coin', 'coin', 'coin', 'coin', 'gem', 'power'];
+const POWER_PICKUP_TYPES = ['shield', 'speed', 'magnet', 'slow', 'jetpack'];
+
+function setupCanvas() {
+  canvas = $('game-canvas');
+  ctx = canvas.getContext('2d');
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', function () { setTimeout(resizeCanvas, 200); });
+  resizeCanvas();
+}
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvasW = rect.width;
+  canvasH = rect.height;
+  canvas.width = Math.floor(canvasW * dpr);
+  canvas.height = Math.floor(canvasH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  recomputeTrackGeometry();
+}
+
+function recomputeTrackGeometry() {
+  trackGeo = {
+    groundY: canvasH * 0.86,
+    vanishY: canvasH * 0.14,
+    roadHalfBottom: canvasW * 0.46,
+    roadHalfTop: canvasW * 0.10
+  };
+}
+
+function refreshThemeColorCache() {
+  const cs = getComputedStyle(document.body);
+  themeColors = {
+    deep: cs.getPropertyValue('--bg-deep').trim() || '#0d0221',
+    mid: cs.getPropertyValue('--bg-mid').trim() || '#1a0b3d',
+    elevated: cs.getPropertyValue('--bg-elevated').trim() || '#241454',
+    primary: cs.getPropertyValue('--accent-primary').trim() || '#ff2e9a',
+    secondary: cs.getPropertyValue('--accent-secondary').trim() || '#00e5ff',
+    tertiary: cs.getPropertyValue('--accent-tertiary').trim() || '#ffe600',
+    track: cs.getPropertyValue('--track-color').trim() || '#2d1b69'
+  };
+}
+
+function depthT(p) { return clamp(p, 0, 1); }
+
+function roadHalfWidthAt(p) { return lerp(trackGeo.roadHalfTop, trackGeo.roadHalfBottom, depthT(p)); }
+
+function screenYAt(p) { return lerp(trackGeo.vanishY, trackGeo.groundY, depthT(p)); }
+
+function laneXAt(lane, p) {
+  const half = roadHalfWidthAt(p);
+  const offset = (lane - 1) * (half * 0.66);
+  return canvasW / 2 + offset;
+}
+
+function scaleAt(p) { return lerp(0.32, 1, depthT(p)); }
+
+function createRunState() {
+  return {
+    score: 0,
+    lastDilemmaScore: 0,
+    lives: CONFIG.LIVES_MAX,
+    gameSpeed: CONFIG.BASE_SPEED,
+    distanceScroll: 0,
+    player: {
+      lane: 1,
+      renderX: laneXAt(1, 1),
+      action: 'run',
+      jumpHeight: 0,
+      jumpVelocity: 0,
+      slideTicks: 0,
+      animTimer: 0,
+      animFrame: 0
+    },
+    inventory: Object.assign({}, state.powerLevels),
+    activePowers: {},
+    entities: [],
+    spawnTimer: 0,
+    spawnInterval: CONFIG.SPAWN_INTERVAL_BASE,
+    xpGainedThisRun: 0,
+    coinsGainedThisRun: 0,
+    gemsGainedThisRun: 0,
+    paused: false,
+    inDilemma: false,
+    over: false,
+    sessionXPBefore: 0
+  };
+}
+
+function startNewRun() {
+  ensureAudio();
+  runState = createRunState();
+  runState.sessionXPBefore = state.totalXP;
+  resizeCanvas();
+  updateHeartsDisplay();
+  updateHUDCurrency();
+  updateHUDXP();
+  updateHUDScore();
+  hidePowerIndicators();
+  showScreen('screen-game');
+  startMusic();
+  lastFrameTime = 0;
+  accumulator = 0;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(gameLoop);
+}
+
+function gameLoop(now) {
+  rafId = requestAnimationFrame(gameLoop);
+  if (!lastFrameTime) lastFrameTime = now;
+  let delta = now - lastFrameTime;
+  lastFrameTime = now;
+  if (delta > 250) delta = 250;
+  accumulator += delta;
+
+  while (accumulator >= FIXED_DT) {
+    if (runState && !runState.paused && !runState.inDilemma && !runState.over) {
+      updateGame(FIXED_DT);
+    }
+    accumulator -= FIXED_DT;
+  }
+  renderGame();
+}
+
+function updateGame(dt) {
+  const rs = runState;
+  let speedMult = 1;
+  if (rs.activePowers.speed) speedMult *= CONFIG.SPEED_MULT_BOOST;
+  if (rs.activePowers.slow) speedMult *= CONFIG.SPEED_MULT_SLOW;
+
+  rs.gameSpeed = clamp(CONFIG.BASE_SPEED + rs.score * CONFIG.SPEED_GAIN_PER_SCORE, CONFIG.BASE_SPEED, CONFIG.MAX_SPEED);
+  const effectiveSpeed = rs.gameSpeed * speedMult;
+  rs.distanceScroll += effectiveSpeed;
+
+  const xpMultiplier = rs.activePowers.speed ? 2 : 1;
+  rs.score += effectiveSpeed * 0.05 * xpMultiplier;
+
+  updatePlayerPhysics(rs.player, dt);
+  updateActivePowers(rs, dt);
+  updateEntities(rs, effectiveSpeed, dt);
+  handleSpawning(rs, dt);
+  checkDilemmaTrigger(rs);
+  updateHUDScore();
+}
+
+function updatePlayerPhysics(player, dt) {
+  const ticks = dt / FIXED_DT;
+  if (player.action === 'jump') {
+    player.jumpHeight += player.jumpVelocity * ticks;
+    player.jumpVelocity -= CONFIG.GRAVITY * ticks;
+    if (player.jumpHeight <= 0) {
+      player.jumpHeight = 0;
+      player.jumpVelocity = 0;
+      player.action = 'run';
+    }
+  } else if (player.action === 'slide') {
+    player.slideTicks -= ticks;
+    if (player.slideTicks <= 0) {
+      player.action = 'run';
     }
   }
-  // question
-  g.qSpawn += dt;
-  const first = 280, next = 600;
-  const thr = g.qIndex === 0 ? first : next;
-  if(g.qSpawn > thr && g.qIndex < g.questions.length){
-    g.qSpawn = 0;
-    openQuestion(g.questions[g.qIndex]);
+
+  const targetX = laneXAt(player.lane, 1);
+  player.renderX = lerp(player.renderX, targetX, 0.32);
+
+  const speedForAnim = runState ? runState.gameSpeed : CONFIG.BASE_SPEED;
+  const frameDuration = 95 / (speedForAnim / CONFIG.BASE_SPEED);
+  player.animTimer += dt;
+  if (player.animTimer >= frameDuration) {
+    player.animTimer = 0;
+    player.animFrame = (player.animFrame + 1) % 4;
   }
-  // HUD update
-  $(\"#hudScore\").textContent = Math.floor(g.score);
-  $(\"#hudCorrect\").textContent = g.correct;
-  $(\"#hudLives\").textContent = \"❤\".repeat(Math.max(0,g.lives)) + \"♡\".repeat(3-Math.max(0,g.lives));
 }
 
-function draw(){
-  const g = game, ctx = g.ctx, T = THEMES[state.theme];
-  if(!ctx) return;
+function updateActivePowers(rs, dt) {
+  Object.keys(rs.activePowers).forEach(function (type) {
+    const power = rs.activePowers[type];
+    power.left -= dt;
+    const ring = document.querySelector('.powerup-ring-fg[data-ring="' + type + '"]');
+    if (ring) ring.style.setProperty('--pct', String(clamp(power.left / power.total, 0, 1)));
+    if (power.left <= 0) {
+      delete rs.activePowers[type];
+      const indicator = document.querySelector('.powerup-indicator[data-power="' + type + '"]');
+      if (indicator) indicator.setAttribute('hidden', '');
+    }
+  });
+}
+
+function hidePowerIndicators() {
+  document.querySelectorAll('.powerup-indicator').forEach(function (el) { el.setAttribute('hidden', ''); });
+}
+
+function activatePower(type) {
+  if (!runState || runState.paused || runState.inDilemma || runState.over) return;
+  const rs = runState;
+  if (rs.activePowers[type]) return;
+  if (!rs.inventory[type] || rs.inventory[type] <= 0) return;
+  rs.inventory[type] -= 1;
+  rs.activePowers[type] = { total: CONFIG.POWER_DURATION[type], left: CONFIG.POWER_DURATION[type] };
+  sfxPowerup();
+  const indicator = document.querySelector('.powerup-indicator[data-power="' + type + '"]');
+  if (indicator) indicator.removeAttribute('hidden');
+  spawnFloatingText(type.toUpperCase() + '!', canvasW / 2, canvasH * 0.4, 'is-gem');
+}
+
+function handleSpawning(rs, dt) {
+  rs.spawnTimer += dt;
+  const difficultyT = clamp(rs.score / CONFIG.SPAWN_DIFFICULTY_SCORE, 0, 1);
+  rs.spawnInterval = lerp(CONFIG.SPAWN_INTERVAL_BASE, CONFIG.SPAWN_INTERVAL_MIN, difficultyT);
+  if (rs.spawnTimer >= rs.spawnInterval) {
+    rs.spawnTimer = 0;
+    spawnWave(rs);
+  }
+}
+
+function spawnWave(rs) {
+  const lanes = [0, 1, 2];
+  const roll = Math.random();
+
+  if (roll < 0.55) {
+    const blockedLanes = shuffleArray(lanes.slice()).slice(0, randInt(1, 2));
+    blockedLanes.forEach(function (lane) {
+      const type = OBSTACLE_TYPES[randInt(0, OBSTACLE_TYPES.length - 1)];
+      rs.entities.push(makeEntity('obstacle', type, lane));
+    });
+    lanes.filter(function (l) { return blockedLanes.indexOf(l) === -1; }).forEach(function (lane) {
+      if (Math.random() < 0.6) rs.entities.push(makeEntity('pickup', pickPickupType(), lane));
+    });
+  } else {
+    lanes.forEach(function (lane) {
+      if (Math.random() < 0.7) rs.entities.push(makeEntity('pickup', pickPickupType(), lane));
+    });
+  }
+}
+
+function pickPickupType() {
+  const choice = PICKUP_WEIGHTED[randInt(0, PICKUP_WEIGHTED.length - 1)];
+  if (choice === 'power') return POWER_PICKUP_TYPES[randInt(0, POWER_PICKUP_TYPES.length - 1)];
+  return choice;
+}
+
+function makeEntity(category, type, lane) {
+  return { category: category, type: type, lane: lane, p: 0, resolved: false, bobPhase: Math.random() * Math.PI * 2 };
+}
+
+function updateEntities(rs, effectiveSpeed, dt) {
+  const ticks = dt / FIXED_DT;
+  const increment = (effectiveSpeed / CONFIG.PROGRESS_DIVISOR) * ticks;
+
+  for (let i = rs.entities.length - 1; i >= 0; i--) {
+    const ent = rs.entities[i];
+
+    if (ent.category === 'pickup' && rs.activePowers.magnet) {
+      const playerLane = rs.player.lane;
+      if (Math.abs(ent.p - 1) < CONFIG.MAGNET_RANGE_P && ent.lane !== playerLane) {
+        ent.lane += (playerLane > ent.lane ? 1 : -1) * (Math.random() < CONFIG.MAGNET_PULL * 4 ? 1 : 0);
+        ent.lane = clamp(ent.lane, 0, 2);
+      }
+    }
+
+    ent.p += increment;
+
+    if (!ent.resolved && ent.p >= 0.93) {
+      resolveEntity(rs, ent);
+      ent.resolved = true;
+    }
+    if (ent.p >= 1.15) {
+      rs.entities.splice(i, 1);
+    }
+  }
+}
+
+function resolveEntity(rs, ent) {
+  const sameLane = ent.lane === rs.player.lane;
+  if (ent.category === 'obstacle') {
+    if (!sameLane) return;
+    if (rs.activePowers.jetpack) return;
+    const action = rs.player.action;
+    if (ent.type === 'barrier' && action === 'jump' && rs.player.jumpHeight > 8) return;
+    if (ent.type === 'beam' && action === 'slide') return;
+    handleCollision(rs);
+  } else if (ent.category === 'pickup') {
+    const inMagnetRange = rs.activePowers.magnet && Math.abs(ent.lane - rs.player.lane) <= 1;
+    const collected = sameLane || rs.activePowers.jetpack || inMagnetRange;
+    if (collected) handlePickup(rs, ent.type);
+  }
+}
+
+function handleCollision(rs) {
+  if (rs.activePowers.shield) {
+    delete rs.activePowers.shield;
+    const indicator = document.querySelector('.powerup-indicator[data-power="shield"]');
+    if (indicator) indicator.setAttribute('hidden', '');
+    sfxShieldBreak();
+    spawnFloatingText('🛡️ -1', canvasW / 2, canvasH * 0.5, '');
+    return;
+  }
+  sfxCollision();
+  loseLife(rs);
+}
+
+function loseLife(rs) {
+  rs.lives -= 1;
+  updateHeartsDisplay();
+  pulseHeart(rs.lives);
+  if (rs.lives <= 0) {
+    triggerGameOver();
+  }
+}
+
+function handlePickup(rs, type) {
+  if (type === 'coin') {
+    state.coins += 1;
+    rs.coinsGainedThisRun += 1;
+    addXP(rs, CONFIG.XP_COIN);
+    sfxCollect();
+    spawnFloatingText('+' + CONFIG.XP_COIN + ' XP', laneXAt(rs.player.lane, 1), trackGeo.groundY - 60, 'is-coin');
+  } else if (type === 'gem') {
+    state.gems += 1;
+    rs.gemsGainedThisRun += 1;
+    addXP(rs, CONFIG.XP_GEM);
+    sfxGem();
+    spawnFloatingText('+' + CONFIG.XP_GEM + ' XP', laneXAt(rs.player.lane, 1), trackGeo.groundY - 60, 'is-gem');
+  } else {
+    rs.inventory[type] = clamp((rs.inventory[type] || 0) + 1, 0, CONFIG.POWER_MAX_STACK);
+    sfxCollect();
+    spawnFloatingText('+1', laneXAt(rs.player.lane, 1), trackGeo.groundY - 60, '');
+  }
+  updateHUDCurrency();
+}
+
+function addXP(rs, amount) {
+  const levelBefore = computeLevel(state.totalXP);
+  state.totalXP = clamp(state.totalXP + amount, 0, CONFIG.XP_PER_LEVEL * CONFIG.MAX_LEVEL);
+  rs.xpGainedThisRun += amount;
+  rs.score = Math.max(0, rs.score + amount);
+  const levelAfter = computeLevel(state.totalXP);
+  updateHUDXP();
+  if (levelAfter > levelBefore) {
+    showLevelUpToast(levelAfter);
+    sfxLevelUp();
+  }
+}
+
+function checkDilemmaTrigger(rs) {
+  if (rs.score - rs.lastDilemmaScore >= CONFIG.DILEMMA_SCORE_STEP) {
+    rs.lastDilemmaScore = rs.score;
+    openDilemma();
+  }
+}
+
+
+/* ---- HUD ---- */
+
+function updateHeartsDisplay() {
+  document.querySelectorAll('#hud-lives .heart').forEach(function (heart, idx) {
+    heart.classList.toggle('lost', idx >= runState.lives);
+  });
+}
+
+function pulseHeart(remaining) {
+  const heart = document.querySelector('#hud-lives .heart[data-heart="' + (remaining + 1) + '"]');
+  if (heart) {
+    heart.classList.add('pulse');
+    setTimeout(function () { heart.classList.remove('pulse'); }, 420);
+  }
+}
+
+function updateHUDScore() {
+  $('hud-score').textContent = Math.floor(runState.score);
+}
+
+function updateHUDCurrency() {
+  $('hud-coins').textContent = Math.floor(state.coins);
+  $('hud-gems').textContent = Math.floor(state.gems);
+}
+
+function updateHUDXP() {
+  const level = computeLevel(state.totalXP);
+  $('hud-level').textContent = level;
+  const xpIntoLevel = clamp(state.totalXP, 0, CONFIG.XP_PER_LEVEL * CONFIG.MAX_LEVEL) - (level - 1) * CONFIG.XP_PER_LEVEL;
+  const pct = level >= CONFIG.MAX_LEVEL ? 100 : clamp((xpIntoLevel / CONFIG.XP_PER_LEVEL) * 100, 0, 100);
+  $('hud-xp-fill').style.width = pct + '%';
+}
+
+function showLevelUpToast(level) {
+  const toast = $('toast-levelup');
+  $('toast-levelup-text').textContent = t('levelup.text', { n: level });
+  toast.classList.remove('hidden');
+  toast.style.animation = 'none';
+  requestAnimationFrame(function () {
+    toast.style.animation = '';
+  });
+  setTimeout(function () { toast.classList.add('hidden'); }, 2200);
+}
+
+function spawnFloatingText(text, x, y, extraClass) {
+  const layer = $('floating-toast-layer');
+  if (!layer) return;
+  const el = document.createElement('div');
+  el.className = 'float-pop' + (extraClass ? ' ' + extraClass : '');
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  layer.appendChild(el);
+  setTimeout(function () { el.remove(); }, 950);
+}
+
+
+/* ---- Render ---- */
+
+function renderGame() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  drawBackground();
+  drawTrack();
+  if (runState) {
+    const sorted = runState.entities.slice().sort(function (a, b) { return a.p - b.p; });
+    sorted.forEach(drawEntity);
+    drawPlayer();
+  }
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvasH);
+  grad.addColorStop(0, themeColors.deep);
+  grad.addColorStop(1, themeColors.mid);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
   ctx.save();
-  if(g.shake>0){ ctx.translate((Math.random()-.5)*g.shake, (Math.random()-.5)*g.shake); g.shake -= 0.5; }
-  // sky
-  const sky = ctx.createLinearGradient(0,0,0,g.H*0.6);
-  sky.addColorStop(0, T.sky); sky.addColorStop(1, T.track);
-  ctx.fillStyle = sky; ctx.fillRect(0,0,g.W,g.H);
-  // stars
-  ctx.fillStyle = \"rgba(255,255,255,.5)\";
-  for(let i=0;i<30;i++){
-    const sx = (i*73 + g.cloud*0.2) % g.W;
-    const sy = (i*37) % (g.H*0.4);
-    ctx.fillRect(sx, sy, 2, 2);
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = themeColors.elevated;
+  const skylineOffset = (runState ? runState.distanceScroll * 0.05 : 0) % 120;
+  for (let i = -1; i < 6; i++) {
+    const bx = i * 120 - skylineOffset;
+    const bh = 40 + ((i * 37) % 70);
+    ctx.fillRect(bx, trackGeo.vanishY - bh * 0.4, 60, bh * 0.4);
   }
-  // mountains
-  ctx.fillStyle = \"rgba(0,0,0,.35)\";
-  ctx.beginPath(); ctx.moveTo(0, g.H*.55);
-  for(let x=0; x<=g.W; x+=40){
-    const y = g.H*.55 - Math.abs(Math.sin((x+g.cloud)*0.01))*60;
-    ctx.lineTo(x,y);
-  }
-  ctx.lineTo(g.W, g.H*.6); ctx.lineTo(0, g.H*.6); ctx.closePath(); ctx.fill();
-  // track
-  ctx.fillStyle = T.track2;
-  ctx.beginPath();
-  ctx.moveTo(g.W*.35, g.H*.55); ctx.lineTo(g.W*.65, g.H*.55);
-  ctx.lineTo(g.W*1.05, g.H); ctx.lineTo(g.W*-.05, g.H);
-  ctx.closePath(); ctx.fill();
-  // lanes
-  ctx.strokeStyle = \"rgba(255,255,255,.5)\"; ctx.lineWidth = 2;
-  for(let l=0;l<=3;l++){
-    const top = g.W*.35 + (g.W*.30/3)*l;
-    const bot = g.W*-.05 + (g.W*1.10/3)*l;
-    if(l===0||l===3){
-      ctx.beginPath(); ctx.moveTo(top, g.H*.55); ctx.lineTo(bot, g.H); ctx.stroke();
-    } else {
-      for(let k=0;k<14;k++){
-        const tt = (k*80 - g.stripe)/1100;
-        if(tt<0||tt>1) continue;
-        const x1 = top + (bot-top)*tt, y1 = g.H*.55 + (g.H - g.H*.55)*tt;
-        const tt2 = tt+0.025;
-        const x2 = top + (bot-top)*tt2, y2 = g.H*.55 + (g.H - g.H*.55)*tt2;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      }
-    }
-  }
-  // obstacles
-  for(const o of g.obstacles){
-    const sz = o.size;
-    if(o.type === \"block\"){
-      ctx.fillStyle = \"#e94560\"; ctx.fillRect(o.x-sz/2, o.y-sz, sz, sz);
-      ctx.fillStyle = \"rgba(0,0,0,.3)\"; ctx.fillRect(o.x-sz/2, o.y-sz/6, sz, sz/6);
-      ctx.strokeStyle = \"white\"; ctx.lineWidth = sz*.08;
-      ctx.beginPath();
-      ctx.moveTo(o.x-sz*.25, o.y-sz*.75); ctx.lineTo(o.x+sz*.25, o.y-sz*.25);
-      ctx.moveTo(o.x+sz*.25, o.y-sz*.75); ctx.lineTo(o.x-sz*.25, o.y-sz*.25);
-      ctx.stroke();
-    } else {
-      ctx.fillStyle = \"#7c2d92\";
-      for(let i=0;i<3;i++){
-        ctx.beginPath();
-        ctx.moveTo(o.x-sz*.4+i*sz*.3, o.y);
-        ctx.lineTo(o.x-sz*.25+i*sz*.3, o.y-sz*.4);
-        ctx.lineTo(o.x-sz*.1+i*sz*.3, o.y);
-        ctx.closePath(); ctx.fill();
-      }
-    }
-  }
-  drawHero(ctx, g.hero, T);
   ctx.restore();
 }
 
-function drawHero(ctx, h, T){
-  const px = 6;
-  const x = Math.round(h.x - 5*px);
-  const y = Math.round(h.y - 12*px);
-  const f = h.frame;
-  const legA = (f===0||f===2)?0:1, legB = legA?0:1;
-  const armA = f===1?-1:f===3?1:0;
-  // cape
-  ctx.fillStyle = T.primary;
-  ctx.fillRect(x-px, y+2*px, 2*px, 6*px);
-  ctx.fillRect(x-2*px, y+3*px, px, 4*px);
-  // head
-  ctx.fillStyle = \"#ffd9a0\"; ctx.fillRect(x+3*px, y, 4*px, 3*px);
-  // helmet
-  ctx.fillStyle = \"#cdd3dc\";
-  ctx.fillRect(x+2*px, y-px, 6*px, 2*px);
-  ctx.fillRect(x+3*px, y+px, 4*px, px);
-  ctx.fillStyle = T.accent; ctx.fillRect(x+4*px, y-3*px, 2*px, 2*px);
-  ctx.fillStyle = \"#102030\";
-  ctx.fillRect(x+4*px, y+px, px, px); ctx.fillRect(x+6*px, y+px, px, px);
-  // body
-  ctx.fillStyle = \"#9aa5b8\"; ctx.fillRect(x+2*px, y+3*px, 6*px, 4*px);
-  ctx.fillStyle = \"#5a3a1a\"; ctx.fillRect(x+2*px, y+7*px, 6*px, px);
-  ctx.fillStyle = T.primary; ctx.fillRect(x+4*px, y+4*px, 2*px, 2*px);
-  // arms
-  ctx.fillStyle = \"#9aa5b8\";
-  ctx.fillRect(x+px, y+3*px+armA*px, px, 3*px);
-  ctx.fillRect(x+8*px, y+3*px-armA*px, px, 3*px);
-  // sword
-  ctx.fillStyle = \"#e8edf5\"; ctx.fillRect(x+9*px, y+px-armA*px, px, 5*px);
-  ctx.fillStyle = T.accent; ctx.fillRect(x+8*px, y+5*px-armA*px, 2*px, px);
-  // legs
-  ctx.fillStyle = \"#3a4a6a\";
-  ctx.fillRect(x+3*px, y+8*px, 2*px, 3*px+legA*px);
-  ctx.fillRect(x+5*px, y+8*px, 2*px, 3*px+legB*px);
-  ctx.fillStyle = \"#241a14\";
-  ctx.fillRect(x+3*px, y+11*px+legA*px, 2*px, px);
-  ctx.fillRect(x+5*px, y+11*px+legB*px, 2*px, px);
-  // shadow
-  ctx.fillStyle = \"rgba(0,0,0,.35)\";
-  ctx.beginPath(); ctx.ellipse(h.x, h.y+4, 28, 6, 0, 0, Math.PI*2); ctx.fill();
+function drawTrack() {
+  const groundY = trackGeo.groundY;
+  const vanishY = trackGeo.vanishY;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(canvasW / 2 - trackGeo.roadHalfTop, vanishY);
+  ctx.lineTo(canvasW / 2 + trackGeo.roadHalfTop, vanishY);
+  ctx.lineTo(canvasW / 2 + trackGeo.roadHalfBottom, groundY);
+  ctx.lineTo(canvasW / 2 - trackGeo.roadHalfBottom, groundY);
+  ctx.closePath();
+  ctx.fillStyle = themeColors.track;
+  ctx.fill();
+  ctx.restore();
+
+  const scroll = runState ? runState.distanceScroll : 0;
+  const stripeSpacing = 0.12;
+  const offset = (scroll * 0.00065) % stripeSpacing;
+
+  ctx.save();
+  ctx.strokeStyle = themeColors.secondary;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.55;
+  for (let lane = 0; lane <= 2; lane += 2) {
+    for (let pp = -offset; pp <= 1; pp += stripeSpacing) {
+      const p1 = pp, p2 = pp + stripeSpacing * 0.5;
+      if (p1 < 0 || p2 > 1) continue;
+      const x1 = laneXAt(lane, p1) + (lane === 0 ? roadHalfWidthAt(p1) * 0.33 : -roadHalfWidthAt(p1) * 0.33);
+      const x2 = laneXAt(lane, p2) + (lane === 0 ? roadHalfWidthAt(p2) * 0.33 : -roadHalfWidthAt(p2) * 0.33);
+      ctx.beginPath();
+      ctx.moveTo(x1, screenYAt(p1));
+      ctx.lineTo(x2, screenYAt(p2));
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 
-/* ===== Question / End ===== */
-function openQuestion(q){
-  game.qOpen = true;
-  SFX.question();
-  $(\"#questionText\").textContent = q.q;
-  const list = $(\"#answerList\"); list.innerHTML = \"\";
-  q.options.forEach((opt, i)=>{
-    const b = document.createElement(\"button\");
-    b.className = \"answer-btn\";
-    b.innerHTML = `<span class=\"letter\">${String.fromCharCode(65+i)}.</span>${opt}`;
-    b.onclick = ()=> answerQuestion(i, q.answer);
-    list.appendChild(b);
-  });
-  $(\"#questionOverlay\").classList.remove(\"hidden\");
-}
-function answerQuestion(idx, correctIdx){
-  const ok = idx === correctIdx;
-  if(ok){ game.correct++; game.score += 50; SFX.correct(); toast(t(\"correctAnswer\"), \"success\"); }
-  else { game.lives--; SFX.wrong(); game.shake = 10; toast(t(\"wrongAnswer\"), \"error\"); }
-  game.qIndex++;
-  $(\"#questionOverlay\").classList.add(\"hidden\");
-  game.qOpen = false;
-  if(game.lives <= 0) endGame();
-}
+function drawEntity(ent) {
+  const p = depthT(ent.p);
+  if (p <= 0.02) return;
+  const x = laneXAt(ent.lane, p);
+  const y = screenYAt(p);
+  const scale = scaleAt(p);
 
-async function endGame(){
-  game.ended = true;
-  const finalScore = Math.floor(game.score);
-  $(\"#endScore\").textContent = finalScore;
-  $(\"#endCorrect\").textContent = game.correct;
-  $(\"#endOverlay\").classList.remove(\"hidden\");
-  const isNew = await submitScore(finalScore, game.correct, game.lives);
-  if(isNew){
-    $(\"#newRecordBadge\").classList.remove(\"hidden\");
-    playVictory();
-    $(\"#menuBest\").textContent = state.best;
-    $(\"#hudBest\").textContent = state.best;
+  if (ent.category === 'obstacle') {
+    if (ent.type === 'train') drawTrain(x, y, scale);
+    else if (ent.type === 'barrier') drawBarrier(x, y, scale);
+    else drawBeam(x, y, scale);
   } else {
-    $(\"#newRecordBadge\").classList.add(\"hidden\");
+    const bob = Math.sin((ent.bobPhase || 0) + p * 14) * 4 * scale;
+    if (ent.type === 'coin') drawCoin(x, y + bob, scale);
+    else if (ent.type === 'gem') drawGem(x, y + bob, scale);
+    else drawPowerPickup(x, y + bob, scale, ent.type);
   }
 }
 
-/* ===== Input ===== */
-function move(dir){
-  if(game.ended || game.qOpen || game.paused) return;
-  if(dir === \"left\") game.hero.lane = Math.max(0, game.hero.lane-1);
-  else if(dir === \"right\") game.hero.lane = Math.min(2, game.hero.lane+1);
-  SFX.click();
+function drawTrain(x, y, scale) {
+  const w = 86 * scale, h = 150 * scale;
+  ctx.save();
+  ctx.translate(x, y - h / 2);
+  const grad = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+  grad.addColorStop(0, themeColors.primary);
+  grad.addColorStop(1, themeColors.elevated);
+  ctx.fillStyle = grad;
+  roundRect(-w / 2, -h / 2, w, h, 10 * scale);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  roundRect(-w / 2, -h / 2, w, h * 0.22, 8 * scale);
+  ctx.fill();
+  ctx.font = (40 * scale) + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🚂', 0, h * 0.08);
+  ctx.restore();
 }
-function jump(){
-  if(game.ended || game.qOpen || game.paused) return;
-  if(!game.hero.jumping){ game.hero.jumping = true; game.hero.vy = -12; SFX.jump(); }
-}
-function togglePause(){
-  if(game.ended || game.qOpen) return;
-  game.paused = !game.paused;
-  $(\"#pauseOverlay\").classList.toggle(\"hidden\", !game.paused);
-}
-window.addEventListener(\"keydown\", (e)=>{
-  if(!$(\"#game\").classList.contains(\"active\")) return;
-  if(e.key===\"ArrowLeft\"||e.key===\"a\"||e.key===\"A\") move(\"left\");
-  else if(e.key===\"ArrowRight\"||e.key===\"d\"||e.key===\"D\") move(\"right\");
-  else if(e.key===\"ArrowUp\"||e.key===\"w\"||e.key===\"W\"||e.key===\" \") jump();
-  else if(e.key===\"Escape\"||e.key===\"p\"||e.key===\"P\") togglePause();
-});
-// touch swipe
-let tsx=null, tsy=null;
-document.addEventListener(\"touchstart\", e=>{ if(!game.canvas) return; const t=e.touches[0]; tsx=t.clientX; tsy=t.clientY; }, {passive:true});
-document.addEventListener(\"touchend\", e=>{
-  if(tsx==null || !$(\"#game\").classList.contains(\"active\")) return;
-  const t=e.changedTouches[0], dx=t.clientX-tsx, dy=t.clientY-tsy;
-  if(Math.abs(dx) > Math.abs(dy)){ if(dx<-25) move(\"left\"); else if(dx>25) move(\"right\"); }
-  else { if(dy<-25) jump(); }
-  tsx=null;
-}, {passive:true});
 
-/* ===== Settings UI ===== */
-function buildThemeGrid(){
-  const grid = $(\"#themeGrid\"); grid.innerHTML = \"\";
-  Object.entries(THEMES).forEach(([k,T])=>{
-    const b = document.createElement(\"button\");
-    b.className = \"theme-swatch\" + (state.theme===k?\" active\":\"\");
-    b.style.background = T.track;
-    b.innerHTML = `<div class=\"colors\"><span style=\"background:${T.primary}\"></span><span style=\"background:${T.accent}\"></span></div><div class=\"name\">${k}</div>`;
-    b.onclick = ()=>{
-      state.theme = k; localStorage.setItem(\"theme\", k);
-      applyTheme(); buildThemeGrid();
-    };
-    grid.appendChild(b);
+function drawBarrier(x, y, scale) {
+  const w = 70 * scale, h = 26 * scale;
+  ctx.save();
+  ctx.translate(x, y - h / 2);
+  ctx.fillStyle = themeColors.tertiary;
+  roundRect(-w / 2, -h / 2, w, h, 6 * scale);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 3 * scale;
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * (w / 5), -h / 2);
+    ctx.lineTo(i * (w / 5) + h * 0.6, h / 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBeam(x, y, scale) {
+  const w = 78 * scale, h = 20 * scale;
+  ctx.save();
+  ctx.translate(x, y - h * 2.4);
+  ctx.fillStyle = themeColors.primary;
+  roundRect(-w / 2, -h / 2, w, h, 5 * scale);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(-w / 2, -h / 2, w, 3 * scale);
+  ctx.restore();
+}
+
+function drawCoin(x, y, scale) {
+  ctx.save();
+  ctx.font = (30 * scale) + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(255,210,76,0.7)';
+  ctx.shadowBlur = 8 * scale;
+  ctx.fillText('🪙', x, y);
+  ctx.restore();
+}
+
+function drawGem(x, y, scale) {
+  ctx.save();
+  ctx.font = (30 * scale) + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(122,215,255,0.8)';
+  ctx.shadowBlur = 10 * scale;
+  ctx.fillText('💎', x, y);
+  ctx.restore();
+}
+
+const POWER_ICONS = { shield: '🛡️', speed: '⚡', magnet: '🧲', slow: '🌀', jetpack: '🚀' };
+
+function drawPowerPickup(x, y, scale, type) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, 22 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = themeColors.secondary;
+  ctx.lineWidth = 2 * scale;
+  ctx.stroke();
+  ctx.font = (26 * scale) + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(POWER_ICONS[type] || '✨', x, y);
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawPlayer() {
+  const rs = runState;
+  const player = rs.player;
+  const groundY = trackGeo.groundY;
+  const x = player.renderX;
+  const baseScale = 1.05;
+  const jumpOffsetPx = player.jumpHeight * 2.1;
+  let y = groundY - jumpOffsetPx;
+  let squashY = 1;
+  if (player.action === 'slide') { squashY = 0.6; y += 8; }
+
+  const skin = SKINS.find(function (s) { return s.id === state.equippedSkin; }) || SKINS[0];
+
+  const legAngles = [
+    [25, -25], [-10, 10], [-25, 25], [-10, 10]
+  ];
+  let frame = player.animFrame;
+  let leftLegAngle = 0, rightLegAngle = 0;
+  if (player.action === 'run') {
+    leftLegAngle = legAngles[frame][0];
+    rightLegAngle = legAngles[frame][1];
+  } else if (player.action === 'jump') {
+    leftLegAngle = -45; rightLegAngle = 35;
+  } else if (player.action === 'slide') {
+    leftLegAngle = 70; rightLegAngle = 70;
+  }
+
+  ctx.save();
+  ctx.translate(x, groundY);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 26 * baseScale, 8 * baseScale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(baseScale, baseScale * squashY);
+
+  drawLeg(rightLegAngle, 6);
+  drawLeg(leftLegAngle, -6);
+
+  ctx.fillStyle = skin.accent;
+  ctx.beginPath();
+  ctx.moveTo(-2, -34);
+  ctx.quadraticCurveTo(-22, -10 + Math.sin(frame) * 3, -6, 6);
+  ctx.lineTo(2, -10);
+  ctx.closePath();
+  ctx.fill();
+
+  const torsoGrad = ctx.createLinearGradient(0, -44, 0, -6);
+  torsoGrad.addColorStop(0, skin.tint);
+  torsoGrad.addColorStop(1, skin.accent);
+  ctx.fillStyle = torsoGrad;
+  roundRect(-13, -44, 26, 38, 8);
+  ctx.fill();
+
+  ctx.fillStyle = themeColors.deep;
+  ctx.fillRect(-10, -28, 20, 6);
+
+  ctx.fillStyle = skin.tint;
+  ctx.beginPath();
+  ctx.arc(0, -50, 13, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = themeColors.deep;
+  ctx.fillRect(-8, -52, 16, 5);
+
+  if (rs.activePowers.shield) {
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(performance.now() / 120) * 0.15;
+    ctx.strokeStyle = themeColors.secondary;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, -25, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawLeg(angleDeg, offsetX) {
+  ctx.save();
+  ctx.translate(offsetX, -6);
+  ctx.rotate(angleDeg * Math.PI / 180);
+  ctx.fillStyle = '#2a2a3a';
+  roundRect(-5, 0, 10, 26, 3);
+  ctx.fill();
+  ctx.restore();
+}
+
+
+/* =====================================================================
+   17. CONTROLES (TECLADO E TOUCH)
+   ===================================================================== */
+
+function moveLane(dir) {
+  if (!runState || runState.paused || runState.inDilemma || runState.over) return;
+  runState.player.lane = clamp(runState.player.lane + dir, 0, CONFIG.LANES - 1);
+}
+
+function doJump() {
+  if (!runState || runState.paused || runState.inDilemma || runState.over) return;
+  if (runState.player.action === 'run') {
+    runState.player.action = 'jump';
+    runState.player.jumpVelocity = CONFIG.JUMP_FORCE;
+    sfxJump();
+  }
+}
+
+function doSlide() {
+  if (!runState || runState.paused || runState.inDilemma || runState.over) return;
+  if (runState.player.action === 'run') {
+    runState.player.action = 'slide';
+    runState.player.slideTicks = CONFIG.SLIDE_DURATION_TICKS;
+  }
+}
+
+function handleActionCode(code) {
+  switch (code) {
+    case 'ArrowLeft': case 'KeyA': moveLane(-1); break;
+    case 'ArrowRight': case 'KeyD': moveLane(1); break;
+    case 'ArrowUp': case 'KeyW': doJump(); break;
+    case 'ArrowDown': case 'KeyS': doSlide(); break;
+    case 'Space': activatePower('shield'); break;
+    case 'KeyQ': activatePower('speed'); break;
+    case 'KeyE': activatePower('magnet'); break;
+    case 'KeyR': activatePower('slow'); break;
+    case 'KeyF': activatePower('jetpack'); break;
+    default: break;
+  }
+}
+
+function bindControls() {
+  window.addEventListener('keydown', function (e) {
+    ensureAudio();
+    if (e.code === 'Space') e.preventDefault();
+    if (e.code === 'Escape' || e.code === 'KeyP') {
+      togglePause();
+      return;
+    }
+    if (document.getElementById('screen-game').classList.contains('active')) {
+      handleActionCode(e.code);
+    }
+  });
+
+  document.querySelectorAll('.touch-power-btn').forEach(function (btn) {
+    btn.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      ensureAudio();
+      handleActionCode(btn.getAttribute('data-key'));
+    }, { passive: false });
+    btn.addEventListener('click', function () {
+      ensureAudio();
+      handleActionCode(btn.getAttribute('data-key'));
+    });
+  });
+
+  const swipeLayer = $('touch-swipe-layer');
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+
+  swipeLayer.addEventListener('touchstart', function (e) {
+    const touch = e.changedTouches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  swipeLayer.addEventListener('touchend', function (e) {
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    if (dt > 700) return;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+      moveLane(dx > 0 ? 1 : -1);
+    } else if (Math.abs(dy) > 30) {
+      if (dy < 0) doJump();
+      else doSlide();
+    }
+  }, { passive: true });
+
+  $('btn-pause').addEventListener('click', function () { togglePause(); });
+}
+
+
+/* =====================================================================
+   18. DILEMAS — FLUXO DE PERGUNTA/RESPOSTA
+   ===================================================================== */
+
+let currentDilemma = null;
+
+function openDilemma() {
+  if (!runState) return;
+  runState.inDilemma = true;
+  currentDilemma = nextDilemma();
+  renderDilemma(currentDilemma);
+  $('modal-dilemma').classList.remove('hidden');
+}
+
+function renderDilemma(dilemma) {
+  const lang = state.settings.lang;
+  $('dilemma-category').textContent = t(dilemma.categoryKey);
+  $('dilemma-icon').textContent = dilemma.icon;
+  $('dilemma-title').textContent = dilemma.title[lang];
+  $('dilemma-text').textContent = dilemma.text[lang];
+  $('dilemma-feedback').classList.add('hidden');
+
+  const optionsWrap = $('dilemma-options');
+  optionsWrap.innerHTML = '';
+  optionsWrap.classList.remove('hidden');
+
+  const shuffled = dilemma.options.map(function (o) { return o; });
+  shuffleArray(shuffled);
+
+  const tpl = $('template-dilemma-option');
+  shuffled.forEach(function (option) {
+    const btn = tpl.content.firstElementChild.cloneNode(true);
+    btn.textContent = option.text[lang];
+    btn.addEventListener('click', function () { handleDilemmaAnswer(option, btn); });
+    optionsWrap.appendChild(btn);
   });
 }
 
-/* ===== Auth handlers ===== */
-async function handleLogin(e){
-  e.preventDefault();
-  const email = $(\"#loginEmail\").value, password = $(\"#loginPassword\").value;
-  if(!API_BASE){
-    // local-only mode
-    state.user = { name: email.split(\"@\")[0], email };
-    localStorage.setItem(\"local_user\", JSON.stringify(state.user));
-    updateAuthUI(); show(\"menu\"); toast(t(\"welcomeBack\"));
-    return;
-  }
-  try {
-    const r = await api(\"/api/auth/login\", { method:\"POST\", body: JSON.stringify({ email, password }) });
-    state.token = r.token; state.user = r.user;
-    localStorage.setItem(\"auth_token\", r.token);
-    updateAuthUI(); await loadBest(); show(\"menu\"); toast(t(\"welcomeBack\"));
-  } catch(err){ toast(err.message, \"error\"); }
-}
-async function handleRegister(e){
-  e.preventDefault();
-  const name = $(\"#regName\").value, email = $(\"#regEmail\").value, password = $(\"#regPassword\").value;
-  if(!API_BASE){
-    state.user = { name, email };
-    localStorage.setItem(\"local_user\", JSON.stringify(state.user));
-    updateAuthUI(); show(\"menu\"); toast(t(\"welcomeBack\"));
-    return;
-  }
-  try {
-    const r = await api(\"/api/auth/register\", { method:\"POST\", body: JSON.stringify({ name, email, password }) });
-    state.token = r.token; state.user = r.user;
-    localStorage.setItem(\"auth_token\", r.token);
-    updateAuthUI(); await loadBest(); show(\"menu\"); toast(t(\"welcomeBack\"));
-  } catch(err){ toast(err.message, \"error\"); }
-}
-async function handleLogout(){
-  if(API_BASE && state.token){ try { await api(\"/api/auth/logout\", { method:\"POST\" }); } catch {} }
-  state.user = null; state.token = null;
-  localStorage.removeItem(\"auth_token\"); localStorage.removeItem(\"local_user\");
-  updateAuthUI(); await loadBest();
-}
-function googleLogin(){
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS
-  const redirect = window.location.origin + window.location.pathname;
-  window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirect)}`;
-}
-async function processGoogleCallback(){
-  if(!window.location.hash.includes(\"session_id=\")) return;
-  const params = new URLSearchParams(window.location.hash.replace(/^#/,\"\"));
-  const sid = params.get(\"session_id\");
-  if(!sid) return;
-  window.history.replaceState({}, \"\", window.location.pathname);
-  if(!API_BASE){ toast(\"Backend não configurado\", \"error\"); return; }
-  try {
-    const r = await api(\"/api/auth/google/session\", { method:\"POST\", body: JSON.stringify({ session_id: sid }) });
-    state.token = r.token; state.user = r.user;
-    localStorage.setItem(\"auth_token\", r.token);
-    updateAuthUI(); await loadBest(); toast(t(\"welcomeBack\"));
-  } catch(err){ toast(err.message, \"error\"); }
-}
+function handleDilemmaAnswer(option, btnEl) {
+  const lang = state.settings.lang;
+  document.querySelectorAll('.dilemma-option-btn').forEach(function (b) { b.disabled = true; });
+  btnEl.classList.add(option.correct ? 'is-correct' : 'is-incorrect');
 
-/* ===== Wire up everything ===== */
-document.addEventListener(\"click\", (e)=>{
-  const t = e.target.closest(\"[data-action]\"); if(!t) return;
-  const a = t.dataset.action;
-  if(a===\"start-game\") startGame();
-  else if(a===\"back-menu\"){ cancelAnimationFrame(game.raf); show(\"menu\"); loadBest(); }
-  else if(a===\"restart\") startGame();
-  else if(a===\"resume\") togglePause();
-  else if(a===\"toggle-pause\") togglePause();
-  else if(a===\"move-left\") move(\"left\");
-  else if(a===\"move-right\") move(\"right\");
-  else if(a===\"jump\") jump();
-  else if(a===\"open-login\") show(\"login\");
-  else if(a===\"open-register\") show(\"register\");
-  else if(a===\"open-settings\") show(\"settings\");
-  else if(a===\"open-leaderboard\"){ show(\"leaderboard\"); loadLeaderboard(); }
-  else if(a===\"google-login\") googleLogin();
-});
-$(\"#logoutBtn\").addEventListener(\"click\", handleLogout);
-$(\"#loginForm\").addEventListener(\"submit\", handleLogin);
-$(\"#registerForm\").addEventListener(\"submit\", handleRegister);
-$(\"#langSelect\").addEventListener(\"change\", (e)=>{ state.lang = e.target.value; localStorage.setItem(\"lang\", state.lang); applyI18n(); });
-$(\"#cbSelect\").addEventListener(\"change\", (e)=>{ state.colorblind = e.target.value; localStorage.setItem(\"colorblind\", state.colorblind); applyTheme(); });
+  const feedbackBox = $('dilemma-feedback');
+  const feedbackText = $('dilemma-feedback-text');
+  const feedbackXP = $('dilemma-feedback-xp');
 
-/* ===== Init ===== */
-(async function init(){
-  $(\"#langSelect\").value = state.lang;
-  $(\"#cbSelect\").value = state.colorblind;
-  applyTheme(); applyI18n(); buildThemeGrid();
-  // restore local user if no backend
-  if(!API_BASE){
-    const u = localStorage.getItem(\"local_user\");
-    if(u){ state.user = JSON.parse(u); }
-    updateAuthUI();
+  if (option.correct) {
+    addXP(runState, CONFIG.XP_CORRECT);
+    feedbackText.textContent = currentDilemma.feedbackCorrect[lang];
+    feedbackXP.textContent = t('dilemma.correct', { xp: CONFIG.XP_CORRECT });
+    feedbackXP.className = 'dilemma-feedback-xp is-positive';
+    sfxCorrect();
   } else {
-    await loadUser();
+    addXP(runState, CONFIG.XP_WRONG);
+    feedbackText.textContent = currentDilemma.feedbackIncorrect[lang];
+    feedbackXP.textContent = t('dilemma.incorrect', { xp: CONFIG.XP_WRONG });
+    feedbackXP.className = 'dilemma-feedback-xp is-negative';
+    sfxWrong();
+    loseLife(runState);
   }
-  await processGoogleCallback();
-  await loadBest();
+
+  feedbackBox.classList.remove('hidden');
+}
+
+function bindDilemmaContinue() {
+  $('btn-dilemma-continue').addEventListener('click', function () {
+    $('modal-dilemma').classList.add('hidden');
+    if (runState) runState.inDilemma = false;
+    if (runState && runState.lives <= 0) {
+      triggerGameOver();
+    }
+  });
+}
+
+
+/* =====================================================================
+   19. PAUSA / GAME OVER
+   ===================================================================== */
+
+function togglePause() {
+  if (!runState || runState.over || runState.inDilemma) return;
+  runState.paused = !runState.paused;
+  if (runState.paused) {
+    $('modal-pause').classList.remove('hidden');
+  } else {
+    $('modal-pause').classList.add('hidden');
+  }
+}
+
+function bindPauseModal() {
+  $('btn-resume').addEventListener('click', function () { sfxClick(); togglePause(); });
+  $('btn-restart').addEventListener('click', function () {
+    sfxClick();
+    $('modal-pause').classList.add('hidden');
+    startNewRun();
+  });
+  $('btn-pause-settings').addEventListener('click', function () {
+    sfxClick();
+    $('modal-pause').classList.add('hidden');
+    showScreen('screen-settings');
+  });
+  $('btn-pause-exit').addEventListener('click', function () {
+    sfxClick();
+    $('modal-pause').classList.add('hidden');
+    exitToMenu();
+  });
+}
+
+function exitToMenu() {
+  if (rafId) cancelAnimationFrame(rafId);
+  stopMusic();
+  runState = null;
+  refreshMenuScreen();
+  showScreen('screen-menu');
+}
+
+function triggerGameOver() {
+  if (!runState || runState.over) return;
+  runState.over = true;
+  stopMusic();
+
+  const finalScore = Math.floor(runState.score);
+  const level = computeLevel(state.totalXP);
+  const isNewRecord = finalScore > state.bestScore;
+  if (isNewRecord) state.bestScore = finalScore;
+
+  saveState();
+  submitScore(state.playerName || 'Jogador', finalScore, level);
+
+  $('gameover-score').textContent = finalScore;
+  $('gameover-xp').textContent = Math.max(0, Math.floor(runState.xpGainedThisRun));
+  $('gameover-coins').textContent = runState.coinsGainedThisRun;
+  $('gameover-gems').textContent = runState.gemsGainedThisRun;
+  $('gameover-newrecord').classList.toggle('hidden', !isNewRecord);
+
+  setTimeout(function () {
+    $('modal-gameover').classList.remove('hidden');
+  }, 350);
+}
+
+function bindGameOverModal() {
+  $('btn-gameover-retry').addEventListener('click', function () {
+    sfxClick();
+    $('modal-gameover').classList.add('hidden');
+    startNewRun();
+  });
+  $('btn-gameover-menu').addEventListener('click', function () {
+    sfxClick();
+    $('modal-gameover').classList.add('hidden');
+    exitToMenu();
+  });
+}
+
+
+/* =====================================================================
+   20. BOOT — INICIALIZAÇÃO GERAL
+   ===================================================================== */
+
+function bindLoginModal() {
+  $('btn-login-confirm').addEventListener('click', confirmLogin);
+  $('input-login-name').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') confirmLogin();
+  });
+}
+
+function confirmLogin() {
+  const val = $('input-login-name').value.trim().slice(0, 16) || 'Jogador';
+  state.playerName = val;
+  state.hasLoggedIn = true;
+  saveState();
+  $('modal-login').classList.add('hidden');
+  refreshMenuScreen();
+  showScreen('screen-menu');
+}
+
+function boot() {
+  loadState();
+  document.body.setAttribute('data-theme', state.settings.theme);
+  document.body.setAttribute('data-lang', state.settings.lang);
+  $('btn-mute').setAttribute('data-state', state.settings.muted ? 'muted' : 'unmuted');
+
+  refreshThemeColorCache();
+  setupCanvas();
+  bindNavigation();
+  bindShopTabs();
+  bindSettingsScreen();
+  bindControls();
+  bindLoginModal();
+  bindDilemmaContinue();
+  bindPauseModal();
+  bindGameOverModal();
+
+  applyI18nAll();
+  refreshMenuScreen();
+
+  document.querySelectorAll('#theme-options .settings-option').forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-theme') === state.settings.theme);
+  });
+
+  runLoadingSequence(function () {
+    if (state.hasLoggedIn && state.playerName) {
+      showScreen('screen-menu');
+    } else {
+      showScreen('screen-menu');
+      $('modal-login').classList.remove('hidden');
+    }
+  });
+
+  document.addEventListener('click', ensureAudio, { once: true });
+  document.addEventListener('touchstart', ensureAudio, { once: true });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+
 })();
-"
-Observation: Create successful: /app/standalone/game.js
