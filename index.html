@@ -1,72 +1,350 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Anti-Bullying Runner</title>
-  <link rel="stylesheet" href="style.css"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Anti-Bullying Runner - Um jogo educativo sobre combate ao bullying">
+<title>Anti-Bullying Runner 🛡️</title>
+<link rel="stylesheet" href="styles.css">
 </head>
-
 <body class="theme-dark">
 
-  <div id="gameContainer">
+<canvas id="gameCanvas"></canvas>
+<div id="shieldIndicator">🛡️</div>
+<div id="maxLvlBadge">⭐ NÍVEL MÁXIMO!</div>
+<div id="floatNotif"></div>
+<div id="lifeLostFlash"></div>
+<div class="perfect-confetti" id="confettiContainer"></div>
+<button id="musicToggle" title="Toggle Music">🎵</button>
 
-    <div id="logo">🛡️ Anti-Bullying Runner</div>
-
-    <div id="hud">
-      <div class="hud-item">Coins: <span id="coins">0</span></div>
-      <div class="hud-item">Gems: <span id="gems">0</span></div>
-      <div class="hud-item">XP: <span id="xp">0</span></div><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Anti-Bullying Runner</title>
-
-  <link rel="stylesheet" href="style.css"/>
-</head>
-
-<body class="theme-dark">
-
-  <div id="gameContainer">
-
-    <div id="logo">🛡️ Anti-Bullying Runner</div>
-
-    <div id="hud">
-      <div class="hud-item">Score: <span id="score">0</span></div>
-      <div class="hud-item">Coins: <span id="coins">0</span></div>
-      <div class="hud-item">Gems: <span id="gems">0</span></div>
-      <div class="hud-item">XP: <span id="xp">0</span></div>
-      <div class="hud-item">Level: <span id="level">1</span></div>
-      <div class="hud-item">Distance: <span id="distance">0</span></div>
-    </div>
-
-    <canvas id="game" width="800" height="400"></canvas>
-
-    <div id="controls">
-      <button onclick="game.jump()">⬆ Pular</button>
-      <button onclick="game.showScenario('cyberbullying')">⚠ Dilema</button>
-    </div>
-
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-grp">
+    <div class="hud-item">🏃 <span id="hudScore">0</span></div>
+    <div class="hud-item">🪙 <span id="hudCoins">0</span></div>
+    <div class="hud-item">💎 <span id="hudGems">0</span></div>
+    <div class="hud-item" id="hudMultiplier" style="display:none">✨ x<span id="hudMultVal">2</span></div>
   </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
-
-      <div class="hud-item">Level: <span id="level">1</span></div>
-      <div class="hud-item">Distance: <span id="distance">0</span></div>
-    </div>
-
-    <canvas id="game" width="800" height="400"></canvas>
-
-    <div id="controls">
-      <button onclick="game.jump()">⬆ Pular</button>
-      <button onclick="game.showScenario('cyberbullying')">⚠ Dilema</button>
-    </div>
-
+  <div class="hud-grp">
+    <div class="hud-item" id="hudShield" style="display:none">🛡️ ESCUDO</div>
+    <div class="hud-item" id="hudLives">❤️❤️❤️</div>
+    <div class="hud-item" id="hudDistEl">0m</div>
+    <div class="hud-item" id="hudCombo" style="display:none">🔥 x<span id="hudComboVal">1</span></div>
   </div>
+</div>
 
-  <script src="script.js"></script>
+<!-- Power Bar -->
+<div id="powerBar">
+  <span id="powerBarHint">PODERES</span>
+  <div class="power-slot" id="slot0" onclick="activatePower(0)" title="[ESPAÇO]">
+    <div class="power-icon" id="picon0"><span id="pEmoji0">🛡️</span><div class="power-cooldown-overlay" id="pcd0" style="display:none">-</div></div>
+    <div class="power-label" id="plbl0">Escudo</div>
+    <div class="power-key">[SPC]</div>
+  </div>
+  <div class="power-slot" id="slot1" onclick="activatePower(1)" title="[Q]">
+    <div class="power-icon" id="picon1"><span id="pEmoji1">⚡</span><div class="power-cooldown-overlay" id="pcd1" style="display:none">-</div></div>
+    <div class="power-label" id="plbl1">Velocidade</div>
+    <div class="power-key">[Q]</div>
+  </div>
+  <div class="power-slot" id="slot2" onclick="activatePower(2)" title="[E]">
+    <div class="power-icon" id="picon2"><span id="pEmoji2">🧲</span><div class="power-cooldown-overlay" id="pcd2" style="display:none">-</div></div>
+    <div class="power-label" id="plbl2">Ímã</div>
+    <div class="power-key">[E]</div>
+  </div>
+  <div class="power-slot" id="slot3" onclick="activatePower(3)" title="[R]">
+    <div class="power-icon" id="picon3"><span id="pEmoji3">🌀</span><div class="power-cooldown-overlay" id="pcd3" style="display:none">-</div></div>
+    <div class="power-label" id="plbl3">Lentidão</div>
+    <div class="power-key">[R]</div>
+  </div>
+  <div class="power-slot" id="slot4" onclick="activatePower(4)" title="[F]">
+    <div class="power-icon" id="picon4"><span id="pEmoji4">🚀</span><div class="power-cooldown-overlay" id="pcd4" style="display:none">-</div></div>
+    <div class="power-label" id="plbl4">Jetpack</div>
+    <div class="power-key">[F]</div>
+  </div>
+</div>
+
+<div id="mobileHint">
+  <div class="mhint">← deslize</div>
+  <div class="mhint">↑ pule</div>
+  <div class="mhint">deslize →</div>
+</div>
+
+<!-- Mobile Jump Button -->
+<button id="jumpBtn" style="display:none">↑</button>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="splash-bg-anim"></div>
+  <div class="splash-content">
+    <div class="logo-anim">🛡️</div>
+    <h1 id="splashTitle">Anti-Bullying Runner</h1>
+    <p class="splash-tagline" id="splashTagline">Corra pela justiça. Defenda quem precisa.</p>
+    <p id="splashLoading">CARREGANDO...</p>
+    <div id="splashBar"><div id="splashFill"></div></div>
+    <div id="splashPct">0%</div>
+  </div>
+</div>
+
+<!-- Dilema Modal -->
+<div id="dilemaModal">
+  <div class="dcard">
+    <div class="dilema-header">
+      <div class="dilema-title-row">
+        <span style="font-size:1.6rem" id="dilemaIcon">🎓</span>
+        <div>
+          <div id="dilemaTag" class="dilema-tag">DILEMA</div>
+          <div id="dilemaSubTag" class="dilema-subtag">Situação do cotidiano</div>
+        </div>
+      </div>
+      <div class="dilema-lives" id="dilemaLivesEl">❤️❤️❤️</div>
+    </div>
+    <div class="dilema-q" id="dilemaQ"></div>
+    <div class="dilema-opts" id="dilemaOpts"></div>
+    <div class="dilema-result-msg" id="dilemaResultMsg"></div>
+    <div class="dilema-timer"><div class="dilema-timer-fill" id="dilemaTimerFill" style="width:100%"></div></div>
+    <div class="dilema-footer">
+      <span id="dilemaQNum" style="font-size:.7rem;color:var(--subtext);">Pergunta 1 de 6</span>
+      <span id="dilemaRewardHint" style="font-size:.7rem;color:#22c55e;">✅ Acerte: +500 XP</span>
+    </div>
+  </div>
+</div>
+
+<!-- Perfect Screen -->
+<div id="perfectScreen">
+  <div class="perfect-card">
+    <span class="perfect-star">⭐</span>
+    <div class="perfect-title" id="perfectTitle">PERFEITO!</div>
+    <div class="perfect-subtitle" id="perfectSubtitle">Você concluiu todas as perguntas sem errar nenhuma! Incrível!</div>
+    <div class="perfect-stats">
+      <div class="perfect-stat"><div class="pv" id="pScore">0</div><div class="pk" id="pScoreKey">PONTOS</div></div>
+      <div class="perfect-stat"><div class="pv" id="pDist">0m</div><div class="pk" id="pDistKey">DISTÂNCIA</div></div>
+      <div class="perfect-stat"><div class="pv" id="pXP">+0</div><div class="pk" id="pXPKey">XP BÔNUS</div></div>
+      <div class="perfect-stat"><div class="pv" id="pCoins">+0</div><div class="pk" id="pCoinsKey">MOEDAS BÔNUS</div></div>
+    </div>
+    <button class="btn full" id="perfectContinueBtn" style="background:#16a34a;margin-top:.5rem;">🏃 CONTINUAR CORRENDO</button>
+    <button class="btn full outline" id="perfectMenuBtn" style="border-color:#22c55e;color:#4ade80;margin-top:.4rem;">🏠 <span id="perfectMenuLbl">Menu Principal</span></button>
+  </div>
+</div>
+
+<!-- Menu -->
+<div class="screen active" id="menuScreen">
+  <div class="card">
+    <div class="menu-hero">
+      <span class="menu-logo">🛡️</span>
+      <div>
+        <h2 id="menuTitle">Anti-Bullying Runner</h2>
+        <p class="menu-version">v2.0 Ultra</p>
+      </div>
+    </div>
+
+    <div id="cloudBadge" class="cloud-badge" style="display:none">
+      <span>☁️</span>
+      <span id="cloudBadgeText">Progresso salvo na nuvem</span>
+    </div>
+
+    <div class="profile-row">
+      <button id="avatarBtn" title="Trocar avatar"></button>
+      <div class="name-col">
+        <label class="lbl" id="lblName" for="nameInp">SEU NOME</label>
+        <input class="inp" id="nameInp" type="text" maxlength="20" placeholder="Digite seu nome...">
+        <div id="playerRankBadge" class="rank-badge">🥉 Iniciante</div>
+      </div>
+    </div>
+
+    <div class="xp-bar-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
+        <span class="lbl" id="lblXP">XP</span>
+        <span id="xpLvlLabel" style="font-size:.72rem;color:var(--subtext);font-weight:800;"></span>
+      </div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+      <div class="xp-info"><span id="xpCurrent">0</span><span id="xpMax">5000</span></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="val" id="statBest">0</div><div class="key" id="statBestKey">RECORDE</div></div>
+      <div class="stat-box"><div class="val" id="statCoins">0</div><div class="key" id="statCoinsKey">MOEDAS</div></div>
+      <div class="stat-box"><div class="val" id="statGames">0</div><div class="key" id="statGamesKey">CORRIDAS</div></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin:.3rem 0;">
+      <div class="stat-box" style="flex:1;"><div class="val" style="color:#60a5fa;" id="statGems">0</div><div class="key">GEMAS</div></div>
+      <div class="stat-box" style="flex:1;"><div class="val" style="color:#22c55e;" id="statPowers">0</div><div class="key">PODERES</div></div>
+      <div class="stat-box" style="flex:1;"><div class="val" style="color:#f59e0b;" id="statBestDist">0m</div><div class="key">MELHOR DIST.</div></div>
+    </div>
+
+    <div class="settings-section">
+      <div class="lbl" id="lblTheme" style="margin-bottom:.3rem;">TEMA</div>
+      <div class="row-btns">
+        <button class="theme-btn active" data-theme="dark" id="themeD">🌙 Escuro</button>
+        <button class="theme-btn" data-theme="light" id="themeL">☀️ Claro</button>
+        <button class="theme-btn" data-theme="bw" id="themeBW">◑ P&B</button>
+        <button class="theme-btn" data-theme="neon" id="themeNeon">⚡ Neon</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="lbl" id="lblLang" style="margin-bottom:.3rem;">IDIOMA</div>
+      <div class="row-btns">
+        <button class="lang-btn active" data-lang="pt" id="langPT">🇧🇷 PT</button>
+        <button class="lang-btn" data-lang="en" id="langEN">🇺🇸 EN</button>
+        <button class="lang-btn" data-lang="es" id="langES">🇪🇸 ES</button>
+      </div>
+    </div>
+
+    <div class="menu-grid">
+      <button class="btn play-btn" id="playBtn" style="grid-column:1/-1;">🏃 JOGAR</button>
+      <button class="btn outline" id="topRunBtn">🏆 TOP RUN</button>
+      <button class="btn outline" id="shopBtn">🛒 LOJA</button>
+      <button class="btn outline" id="achievementsBtn">🎖️ CONQUISTAS</button>
+      <button class="btn outline" id="loginBtn"><span id="loginBtnLbl">☁️ Conta & Nuvem</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Shop -->
+<div class="screen" id="shopScreen">
+  <div class="card">
+    <h2 id="shopTitle">🛒 Loja</h2>
+    <div class="shop-currency-bar">
+      <span>🪙 <span style="font-weight:900;color:#fbbf24;" id="shopCoinsDisplay">0</span></span>
+      <span>💎 <span style="font-weight:900;color:#60a5fa;" id="shopGemsDisplay">0</span></span>
+    </div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" data-tab="packs" onclick="setShopTab('packs')">💰 Pacotes</button>
+      <button class="shop-tab" data-tab="powers" onclick="setShopTab('powers')">⚡ Poderes</button>
+      <button class="shop-tab" data-tab="upgrades" onclick="setShopTab('upgrades')">📈 Melhorias</button>
+      <button class="shop-tab" data-tab="cosmetics" onclick="setShopTab('cosmetics')">🎨 Visual</button>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <button class="btn full outline" id="shopBackBtn" style="margin-top:.8rem;">← <span id="shopBackLbl">Voltar</span></button>
+  </div>
+</div>
+
+<!-- Top Run -->
+<div class="screen" id="topRunScreen">
+  <div class="card">
+    <h2>🏆 <span id="topRunTitle">Top Run</span></h2>
+    <div id="topRunTabs" style="display:flex;gap:.4rem;margin-bottom:.8rem;">
+      <button class="login-tab active" id="tabLocal" onclick="showTopTab('local')">📱 Local</button>
+      <button class="login-tab" id="tabGlobal" onclick="showTopTab('global')">🌍 Global</button>
+      <button class="login-tab" id="tabWeekly" onclick="showTopTab('weekly')">📅 Semanal</button>
+    </div>
+    <div class="top-filters">
+      <select id="topFilterScore" class="inp" style="font-size:.8rem;padding:.3rem .6rem;" onchange="renderTopRun()">
+        <option value="score">Por Pontuação</option>
+        <option value="dist">Por Distância</option>
+      </select>
+    </div>
+    <div class="top-list" id="topList"></div>
+    <button class="btn full outline" id="topBackBtn" style="margin-top:.8rem;">← <span id="topBackLbl">Voltar</span></button>
+  </div>
+</div>
+
+<!-- Achievements -->
+<div class="screen" id="achievementsScreen">
+  <div class="card">
+    <h2>🎖️ <span id="achTitle">Conquistas</span></h2>
+    <div class="ach-progress-bar">
+      <div class="lbl" style="margin-bottom:.3rem;">Progresso Total</div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="achProgressFill" style="width:0%"></div></div>
+      <div class="xp-info"><span id="achDone">0</span>/<span id="achTotal">0</span></div>
+    </div>
+    <div class="ach-grid" id="achGrid"></div>
+    <button class="btn full outline" id="achBackBtn" style="margin-top:.8rem;">← Voltar</button>
+  </div>
+</div>
+
+<!-- Login / Conta -->
+<div class="screen" id="loginScreen">
+  <div class="card">
+    <h2>☁️ <span id="loginTitle">Conta & Nuvem</span></h2>
+    <div id="loggedPanel" style="display:none">
+      <div class="logged-user">
+        <div class="logged-avatar" id="loggedAvatar">🧒</div>
+        <div class="logged-info">
+          <div class="logged-name" id="loggedName">-</div>
+          <div class="logged-email" id="loggedEmail">-</div>
+        </div>
+        <span style="font-size:1.3rem;color:#22c55e;">✅</span>
+      </div>
+      <div class="cloud-info-box">
+        ☁️ <span id="cloudSyncInfo">Progresso sincronizado. Seus dados são salvos automaticamente.</span>
+      </div>
+      <button class="btn full" id="syncNowBtn" style="margin-top:.3rem;">🔄 <span id="syncNowLbl">Sincronizar Agora</span></button>
+      <button class="btn full danger outline" id="logoutBtn" style="margin-top:.4rem;">🚪 <span id="logoutLbl">Sair da Conta</span></button>
+    </div>
+    <div id="authPanel">
+      <div class="login-tabs">
+        <button class="login-tab active" id="tabLogin" onclick="switchAuthTab('login')">🔑 Entrar</button>
+        <button class="login-tab" id="tabRegister" onclick="switchAuthTab('register')">✨ Criar Conta</button>
+      </div>
+      <div id="authError" class="login-error"></div>
+      <div id="authSuccess" class="login-success"></div>
+      <div class="login-form" id="loginForm">
+        <div>
+          <div class="login-label" id="lblEmail">EMAIL</div>
+          <input class="inp" id="authEmail" type="email" placeholder="seu@email.com">
+        </div>
+        <div>
+          <div class="login-label" id="lblPassword">SENHA</div>
+          <input class="inp" id="authPassword" type="password" placeholder="••••••••">
+        </div>
+        <div id="registerNameField" style="display:none">
+          <div class="login-label" id="lblRegName">NOME NO JOGO</div>
+          <input class="inp" id="authName" type="text" maxlength="20" placeholder="Seu nome...">
+        </div>
+        <button class="btn full" id="authSubmitBtn">🔑 Entrar</button>
+        <div class="auth-footnote" id="authFootnote">Os dados são salvos localmente no seu dispositivo + nuvem (simulada).</div>
+      </div>
+    </div>
+    <button class="btn full outline" id="loginBackBtn" style="margin-top:.8rem;">← <span id="loginBackLbl">Voltar</span></button>
+  </div>
+</div>
+
+<!-- Game Over -->
+<div class="screen" id="gameOverScreen">
+  <div class="card">
+    <div class="go-emoji">💀</div>
+    <h2 id="goTitle">GAME OVER</h2>
+    <div id="newRecordBadge">🏆 NOVO RECORDE!</div>
+    <div class="go-stats">
+      <div class="go-stat"><div class="gv" id="goScore">0</div><div class="gk" id="goScoreKey">PONTOS</div></div>
+      <div class="go-stat"><div class="gv" id="goDist">0m</div><div class="gk" id="goDistKey">DISTÂNCIA</div></div>
+      <div class="go-stat"><div class="gv" id="goCoins">0</div><div class="gk" id="goCoinsKey">MOEDAS</div></div>
+      <div class="go-stat"><div class="gv" id="goGems">0</div><div class="gk" id="goGemsKey">GEMAS</div></div>
+    </div>
+    <div class="go-detail-box">
+      <div class="go-detail-row">
+        <span class="go-detail-label" id="goXpLabel">XP GANHO</span>
+        <span class="go-detail-val" id="goXp">+0</span>
+      </div>
+      <div class="go-detail-row">
+        <span class="go-detail-label" id="goQLabel">DESEMPENHO NAS PERGUNTAS</span>
+        <span id="goQStats" style="font-size:.9rem;font-weight:700;color:var(--text);margin-top:.2rem;"></span>
+      </div>
+      <div class="go-detail-row">
+        <span class="go-detail-label">COMBO MÁXIMO</span>
+        <span class="go-detail-val" id="goMaxCombo">x0</span>
+      </div>
+    </div>
+    <div id="newAchievements" class="new-achievements" style="display:none">
+      <div class="lbl">🎖️ NOVAS CONQUISTAS!</div>
+      <div id="newAchList"></div>
+    </div>
+    <button class="btn full play-btn" id="replayBtn">🔄 <span id="replayLbl">Jogar Novamente</span></button>
+    <button class="btn full outline" id="goMenuBtn">🏠 <span id="goMenuLbl">Menu Principal</span></button>
+  </div>
+</div>
+
+<!-- Pause Screen -->
+<div id="pauseScreen" style="display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:320px;">
+    <h2>⏸️ PAUSADO</h2>
+    <button class="btn full play-btn" id="resumeBtn" style="margin-top:.8rem;">▶️ Continuar</button>
+    <button class="btn full outline danger" id="quitBtn" style="margin-top:.4rem;">🏠 Sair do Jogo</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
 </body>
 </html>
