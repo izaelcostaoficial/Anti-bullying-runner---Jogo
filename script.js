@@ -1,4 +1,3 @@
-
 /* =====================================================================
    ANTI-BULLYING RUNNER v2.0 ULTRA — GAME.JS
    Endless Runner educativo 2.5D — motor completo do jogo
@@ -823,15 +822,21 @@ function showScreen(id) {
 
 function bindNavigation() {
   $('btn-play').addEventListener('click', function () { sfxClick(); startNewRun(); });
-  $('btn-shop').addEventListener('click', function () { sfxClick(); showScreen('screen-shop'); });
+  $('btn-shop').addEventListener('click', function () {
+    sfxClick();
+    renderShopSkins();
+    renderShopPowerups();
+    renderShopThemes();
+    showScreen('screen-shop');
+  });
   $('btn-ranking').addEventListener('click', function () { sfxClick(); renderRanking(); showScreen('screen-ranking'); });
-  $('btn-settings').addEventListener('click', function () { sfxClick(); showScreen('screen-settings'); });
+  $('btn-settings').addEventListener('click', function () { sfxClick(); refreshSettingsScreen(); showScreen('screen-settings'); });
   $('btn-howto').addEventListener('click', function () { sfxClick(); showScreen('screen-howto'); });
   $('btn-howto-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
   $('btn-shop-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
   $('btn-settings-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
   $('btn-ranking-back').addEventListener('click', function () { sfxClick(); showScreen('screen-menu'); });
-  $('btn-edit-name').addEventListener('click', function () { sfxClick(); showScreen('screen-settings'); });
+  $('btn-edit-name').addEventListener('click', function () { sfxClick(); refreshSettingsScreen(); showScreen('screen-settings'); });
 
   $('btn-mute').addEventListener('click', function () {
     ensureAudio();
@@ -975,6 +980,12 @@ function renderShopSkins() {
   });
 }
 
+function renderAllShopGrids() {
+  renderShopSkins();
+  renderShopThemes();
+  renderShopPowerups();
+}
+
 function buySkin(skinId) {
   const skin = SKINS.find(function (s) { return s.id === skinId; });
   if (!skin) return;
@@ -989,7 +1000,10 @@ function buySkin(skinId) {
   state.ownedSkins.push(skinId);
   state.equippedSkin = skinId;
   saveState();
-  renderShopSkins();
+  // Re-renderiza as 3 abas: gastar moedas/gemas aqui pode ter tornado itens
+  // das outras abas (power-ups, temas) inacessíveis, e isso precisa refletir
+  // imediatamente mesmo que o jogador não tenha trocado de aba ainda.
+  renderAllShopGrids();
 }
 
 function renderShopThemes() {
@@ -1026,7 +1040,7 @@ function buyTheme(themeId) {
   }
   applyTheme(themeId);
   saveState();
-  renderShopThemes();
+  renderAllShopGrids();
 }
 
 function renderShopPowerups() {
@@ -1062,7 +1076,7 @@ function buyPowerLevel(type) {
   spendCurrency(cost);
   state.powerLevels[type] = level + 1;
   saveState();
-  renderShopPowerups();
+  renderAllShopGrids();
 }
 
 
@@ -1070,8 +1084,18 @@ function buyPowerLevel(type) {
    14. TELA: CONFIGURAÇÕES
    ===================================================================== */
 
-function bindSettingsScreen() {
+// Sincroniza os campos da tela de Configurações com o estado atual.
+// Chamada toda vez que essa tela é aberta (menu, edição rápida de nome,
+// ou pelo botão de Configurações dentro da Pausa) — sem isso, por exemplo,
+// o nome digitado no modal de boas-vindas não aparecia aqui depois.
+function refreshSettingsScreen() {
   $('input-player-name').value = state.playerName || '';
+  $('slider-music').value = state.settings.musicVolume;
+  $('slider-sfx').value = state.settings.sfxVolume;
+}
+
+function bindSettingsScreen() {
+  refreshSettingsScreen();
 
   $('btn-save-name').addEventListener('click', function () {
     const val = $('input-player-name').value.trim().slice(0, 16);
@@ -1291,15 +1315,21 @@ function createRunState() {
 
 function startNewRun() {
   ensureAudio();
+  hideAllModals();
+  // A tela precisa ficar visível ANTES de medir o canvas: com "display:none"
+  // (classe .hidden) o getBoundingClientRect() do canvas retorna tudo zerado,
+  // o que quebraria toda a geometria das pistas. Por isso showScreen() vem
+  // antes de resizeCanvas(), e resizeCanvas() vem antes de criar o estado
+  // da corrida (que já depende de coordenadas de pista válidas).
+  showScreen('screen-game');
+  resizeCanvas();
   runState = createRunState();
   runState.sessionXPBefore = state.totalXP;
-  resizeCanvas();
   updateHeartsDisplay();
   updateHUDCurrency();
   updateHUDXP();
   updateHUDScore();
   hidePowerIndicators();
-  showScreen('screen-game');
   startMusic();
   lastFrameTime = 0;
   accumulator = 0;
@@ -1501,10 +1531,19 @@ function handleCollision(rs) {
   loseLife(rs);
 }
 
-function loseLife(rs) {
+// Reduz uma vida e atualiza o HUD, sem disparar o Game Over imediatamente.
+// Usada pelo fluxo de dilema, onde o jogador ainda precisa ler o feedback
+// e clicar em "Continuar Corrida" antes da tela de fim de jogo aparecer.
+function decrementLife(rs) {
   rs.lives -= 1;
   updateHeartsDisplay();
   pulseHeart(rs.lives);
+}
+
+// Usada por colisões em tempo real (trem/obstáculo), onde não há nenhum
+// modal no caminho — o Game Over pode (e deve) disparar imediatamente.
+function loseLife(rs) {
+  decrementLife(rs);
   if (rs.lives <= 0) {
     triggerGameOver();
   }
@@ -1935,6 +1974,13 @@ function handleActionCode(code) {
 
 function bindControls() {
   window.addEventListener('keydown', function (e) {
+    // Se o jogador estiver digitando (nome do jogador, por exemplo), as
+    // teclas de jogo (incluindo Espaço, Q/E/R/F e P) não devem interferir —
+    // sem essa checagem, era impossível digitar nomes com espaço ou com
+    // essas letras sem acionar poderes/pausa por engano.
+    const focusedTag = document.activeElement && document.activeElement.tagName;
+    if (focusedTag === 'INPUT' || focusedTag === 'TEXTAREA') return;
+
     ensureAudio();
     if (e.code === 'Space') e.preventDefault();
     if (e.code === 'Escape' || e.code === 'KeyP') {
@@ -1967,6 +2013,12 @@ function bindControls() {
     touchStartY = touch.clientY;
     touchStartTime = Date.now();
   }, { passive: true });
+
+  // Sem isso, o navegador pode interpretar o swipe como "puxar para
+  // atualizar" ou rolar a página, especialmente em iOS/Android.
+  swipeLayer.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+  }, { passive: false });
 
   swipeLayer.addEventListener('touchend', function (e) {
     const touch = e.changedTouches[0];
@@ -2045,7 +2097,7 @@ function handleDilemmaAnswer(option, btnEl) {
     feedbackXP.textContent = t('dilemma.incorrect', { xp: CONFIG.XP_WRONG });
     feedbackXP.className = 'dilemma-feedback-xp is-negative';
     sfxWrong();
-    loseLife(runState);
+    decrementLife(runState);
   }
 
   feedbackBox.classList.remove('hidden');
@@ -2095,9 +2147,17 @@ function bindPauseModal() {
   });
 }
 
+function hideAllModals() {
+  ['modal-login', 'modal-dilemma', 'modal-pause', 'modal-gameover'].forEach(function (id) {
+    const el = $(id);
+    if (el) el.classList.add('hidden');
+  });
+}
+
 function exitToMenu() {
   if (rafId) cancelAnimationFrame(rafId);
   stopMusic();
+  hideAllModals();
   runState = null;
   refreshMenuScreen();
   showScreen('screen-menu');
@@ -2106,7 +2166,13 @@ function exitToMenu() {
 function triggerGameOver() {
   if (!runState || runState.over) return;
   runState.over = true;
+  runState.inDilemma = false;
+  if (rafId) cancelAnimationFrame(rafId);
   stopMusic();
+  // Fecha qualquer modal de dilema/pausa que ainda esteja visível por baixo,
+  // para que apenas a tela de Game Over apareça.
+  $('modal-dilemma').classList.add('hidden');
+  $('modal-pause').classList.add('hidden');
 
   const finalScore = Math.floor(runState.score);
   const level = computeLevel(state.totalXP);
@@ -2153,10 +2219,12 @@ function bindLoginModal() {
 }
 
 function confirmLogin() {
-  const val = $('input-login-name').value.trim().slice(0, 16) || 'Jogador';
+  const input = $('input-login-name');
+  const val = input.value.trim().slice(0, 16) || 'Jogador';
   state.playerName = val;
   state.hasLoggedIn = true;
   saveState();
+  input.blur();
   $('modal-login').classList.add('hidden');
   refreshMenuScreen();
   showScreen('screen-menu');
