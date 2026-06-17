@@ -8,7 +8,6 @@
 </head>
 <body>
 
-    <!-- CONTAINER PRINCIPAL DO JOGO -->
     <div id="game-container">
         
         <!-- HUD (Interface durante a corrida) -->
@@ -26,7 +25,7 @@
             </div>
         </div>
 
-        <!-- TELA DE LOGIN / TROCA DE NOME -->
+        <!-- TELA DE LOGIN / TROCA DE NOME (Única visível no início) -->
         <div id="screen-login" class="screen">
             <h1 class="game-title">ANTI-BULLYING<br>RUNNER</h1>
             <div class="form-group">
@@ -51,7 +50,6 @@
         <!-- TELA DE CONFIGURAÇÕES -->
         <div id="screen-settings" class="screen hidden">
             <h2>Configurações</h2>
-            
             <div class="setting-option">
                 <label>Idioma / Language:</label>
                 <select id="select-lang">
@@ -59,7 +57,6 @@
                     <option value="en">English</option>
                 </select>
             </div>
-
             <div class="setting-option">
                 <label>Tema de Cores:</label>
                 <select id="select-theme">
@@ -67,12 +64,10 @@
                     <option value="dark">Modo Escuro</option>
                 </select>
             </div>
-
             <div class="setting-option">
                 <label>Áudio:</label>
                 <button id="btn-toggle-sound" class="btn-toggle">Som: LIGADO</button>
             </div>
-
             <button id="btn-settings-back" class="btn-back">Voltar</button>
         </div>
 
@@ -83,37 +78,28 @@
                 <span>🪙 <span id="shop-coins">0</span></span>
                 <span>💎 <span id="shop-gems">0</span></span>
             </div>
-
             <div class="shop-tabs">
                 <button id="tab-chars" class="tab-btn active">Personagens</button>
                 <button id="tab-skins" class="tab-btn">Vestes</button>
                 <button id="tab-powerups" class="tab-btn">Poderes</button>
             </div>
-
-            <div id="shop-items-container" class="shop-grid">
-                <!-- Itens injetados via JavaScript para evitar bugs -->
-            </div>
-
+            <div id="shop-items-container" class="shop-grid"></div>
             <button id="btn-shop-back" class="btn-back">Voltar</button>
         </div>
 
-        <!-- TELA DE PLACAR (LEADERBOARD) -->
+        <!-- TELA DE PLACAR -->
         <div id="screen-leaderboard" class="screen hidden">
             <h2>Placar de Recordes</h2>
-            <div id="leaderboard-list">
-                <!-- Recordes únicos injetados via JS -->
-            </div>
+            <div id="leaderboard-list"></div>
             <button id="btn-leaderboard-back" class="btn-back">Voltar</button>
         </div>
 
-        <!-- TELA DE PERGUNTA (ANTI-BULLYING INTERRUPÇÃO) -->
+        <!-- TELA DE PERGUNTA (QUIZ) -->
         <div id="screen-quiz" class="screen hidden quiz-screen">
             <div class="quiz-box">
                 <div class="quiz-timer"><div id="quiz-timer-bar"></div></div>
                 <h3 id="quiz-question">Pergunta sobre Anti-Bullying?</h3>
-                <div id="quiz-options" class="quiz-options-container">
-                    <!-- 3 Opções de botão aqui -->
-                </div>
+                <div id="quiz-options" class="quiz-options-container"></div>
             </div>
         </div>
 
@@ -129,12 +115,11 @@
             <button id="btn-go-menu" class="btn-sub">Menu Principal</button>
         </div>
 
-        <!-- ÁREA DA RENDERIZAÇÃO DO JOGO -->
+        <!-- CANVAS DO JOGO -->
         <canvas id="gameCanvas" class="hidden"></canvas>
 
     </div>
 
-    <!-- Scripts do Jogo -->
     <script src="game.js"></script>
 </body>
 </html>
