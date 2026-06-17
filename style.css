@@ -1,3 +1,4 @@
+/* Adicione isso ao seu style.css existente ou substitua por completo */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -33,10 +34,8 @@ canvas {
     width: 100%;
     height: 100%;
     display: block;
-    background: #3a255c;
 }
 
-/* Regra Crítica: Esconde todas as telas inativas do fluxo visual */
 .screen {
     position: absolute;
     top: 0;
@@ -51,12 +50,30 @@ canvas {
     z-index: 10;
     text-align: center;
     color: #ffffff;
-    background: linear-gradient(135deg, #1e1e24 0%, #2a1b40 100%);
+    background: linear-gradient(135deg, #130f26 0%, #080511 100%);
 }
 
-/* Força o desaparecimento quando a classe hidden for injetada via JS */
 .hidden {
     display: none !important;
+}
+
+/* ESTILO DA TELA DE LOADING REALISTA */
+.loading-bar-bg {
+    width: 80%;
+    height: 14px;
+    background: #1a152e;
+    border: 2px solid #3a255c;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+}
+
+#loading-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00ffcc, #0099ff);
+    box-shadow: 0 0 10px #00ffcc;
+    transition: width 0.1s linear;
 }
 
 .game-title {
@@ -64,14 +81,6 @@ canvas {
     font-weight: 900;
     color: #00ffcc;
     text-shadow: 0 4px 10px rgba(0, 255, 204, 0.4);
-    margin-bottom: 20px;
-    letter-spacing: 2px;
-}
-
-.danger-title {
-    font-size: 2.5rem;
-    color: #ff3366;
-    text-shadow: 0 4px 12px rgba(255, 51, 102, 0.5);
     margin-bottom: 20px;
 }
 
@@ -87,11 +96,6 @@ canvas {
     cursor: pointer;
     margin: 10px 0;
     box-shadow: 0 6px 15px rgba(0, 255, 204, 0.3);
-    transition: transform 0.1s ease;
-}
-
-.btn-main:active {
-    transform: scale(0.95);
 }
 
 .btn-sub {
@@ -115,7 +119,6 @@ canvas {
     border-radius: 20px;
     color: white;
     font-weight: bold;
-    cursor: pointer;
 }
 
 #hud {
@@ -125,13 +128,12 @@ canvas {
     width: 100%;
     padding: 15px;
     z-index: 5;
-    pointer-events: none;
 }
 
 .hud-top {
     display: flex;
     justify-content: space-between;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.6);
     padding: 10px;
     border-radius: 15px;
 }
@@ -139,60 +141,20 @@ canvas {
 .hud-stat {
     color: #fff;
     font-weight: bold;
-    font-size: 1rem;
 }
 
 .form-group {
     width: 85%;
     margin-bottom: 20px;
-    text-align: left;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #bbb;
 }
 
 .form-group input {
     width: 100%;
     padding: 14px;
     border-radius: 10px;
+    background: #1a112c;
     border: 2px solid #32254f;
-    background: #1a112c;
     color: white;
-    font-size: 1.1rem;
-    outline: none;
-}
-
-.form-group input:focus {
-    border-color: #00ffcc;
-}
-
-.currency-display {
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.shop-tabs {
-    display: flex;
-    width: 100%;
-    margin-bottom: 15px;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 10px;
-    background: #1a112c;
-    border: 1px solid #32254f;
-    color: #aaa;
-}
-
-.tab-btn.active {
-    background: #3a255c;
-    color: #00ffcc;
-    border-bottom: 2px solid #00ffcc;
 }
 
 .shop-grid {
@@ -202,43 +164,4 @@ canvas {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-}
-
-.quiz-screen {
-    background: rgba(10, 5, 20, 0.95);
-}
-
-.quiz-box {
-    background: #251a3a;
-    border: 3px solid #00ffcc;
-    border-radius: 20px;
-    padding: 25px;
-    width: 90%;
-}
-
-.quiz-options-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.btn-quiz-option {
-    width: 100%;
-    padding: 14px;
-    background: #32254f;
-    border: 1px solid #553c8b;
-    border-radius: 10px;
-    color: white;
-    cursor: pointer;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-    100% { transform: scale(1); }
-}
-
-.pulse {
-    animation: pulse 2s infinite ease-in-out;
 }
