@@ -10,6 +10,15 @@
 
     <div id="game-container">
         
+        <!-- TELA DE CARREGAMENTO (LOADING SCREEN) -->
+        <div id="screen-loading" class="screen">
+            <h1 class="game-title" style="font-size: 2rem;">CARREGANDO JOGO...</h1>
+            <p style="color: #00ffcc; margin-bottom: 20px; font-weight: bold;" id="loading-status">Iniciando Motor Realista...</p>
+            <div class="loading-bar-bg">
+                <div id="loading-bar-fill"></div>
+            </div>
+        </div>
+
         <!-- HUD (Interface durante a corrida) -->
         <div id="hud" class="hidden">
             <div class="hud-top">
@@ -18,15 +27,10 @@
                 <div class="hud-stat">⭐ <span id="hud-score">0</span></div>
                 <div class="hud-stat">❤️ <span id="hud-lives">3</span></div>
             </div>
-            <div class="hud-bottom">
-                <div id="powerup-bar-container" class="hidden">
-                    <div id="powerup-bar"></div>
-                </div>
-            </div>
         </div>
 
-        <!-- TELA DE LOGIN / TROCA DE NOME (Única visível no início) -->
-        <div id="screen-login" class="screen">
+        <!-- TELA DE LOGIN / TROCA DE NOME -->
+        <div id="screen-login" class="screen hidden">
             <h1 class="game-title">ANTI-BULLYING<br>RUNNER</h1>
             <div class="form-group">
                 <label for="player-name-input">Digite seu Nome:</label>
@@ -50,23 +54,23 @@
         <!-- TELA DE CONFIGURAÇÕES -->
         <div id="screen-settings" class="screen hidden">
             <h2>Configurações</h2>
-            <div class="setting-option">
+            <div class="setting-option" style="margin: 15px 0;">
                 <label>Idioma / Language:</label>
                 <select id="select-lang">
                     <option value="pt">Português</option>
                     <option value="en">English</option>
                 </select>
             </div>
-            <div class="setting-option">
+            <div class="setting-option" style="margin: 15px 0;">
                 <label>Tema de Cores:</label>
                 <select id="select-theme">
                     <option value="vibrant">Neon Vibrante</option>
                     <option value="dark">Modo Escuro</option>
                 </select>
             </div>
-            <div class="setting-option">
+            <div class="setting-option" style="margin: 15px 0;">
                 <label>Áudio:</label>
-                <button id="btn-toggle-sound" class="btn-toggle">Som: LIGADO</button>
+                <button id="btn-toggle-sound" class="btn-toggle" style="padding: 8px; background: #32254f; color: #fff; border: 1px solid #00ffcc; border-radius: 5px;">Som: LIGADO</button>
             </div>
             <button id="btn-settings-back" class="btn-back">Voltar</button>
         </div>
@@ -90,14 +94,13 @@
         <!-- TELA DE PLACAR -->
         <div id="screen-leaderboard" class="screen hidden">
             <h2>Placar de Recordes</h2>
-            <div id="leaderboard-list"></div>
+            <div id="leaderboard-list" style="width: 100%; margin: 20px 0;"></div>
             <button id="btn-leaderboard-back" class="btn-back">Voltar</button>
         </div>
 
         <!-- TELA DE PERGUNTA (QUIZ) -->
         <div id="screen-quiz" class="screen hidden quiz-screen">
             <div class="quiz-box">
-                <div class="quiz-timer"><div id="quiz-timer-bar"></div></div>
                 <h3 id="quiz-question">Pergunta sobre Anti-Bullying?</h3>
                 <div id="quiz-options" class="quiz-options-container"></div>
             </div>
@@ -106,10 +109,10 @@
         <!-- TELA DE GAME OVER -->
         <div id="screen-gameover" class="screen hidden">
             <h1 class="danger-title">Fim de Jogo!</h1>
-            <div class="results-box">
+            <div class="results-box" style="margin-bottom: 20px;">
                 <p>Pontuação: <span id="go-score">0</span></p>
                 <p>Moedas: 🪙 <span id="go-coins">0</span></p>
-                <p id="go-new-record" class="hidden new-record-anim">🎉 NOVO RECORDE! 🎉</p>
+                <p id="go-new-record" class="hidden" style="color: #ffcc00; font-weight: bold; font-size: 1.3rem;">🎉 NOVO RECORDE! 🎉</p>
             </div>
             <button id="btn-retry" class="btn-main">Jogar Novamente</button>
             <button id="btn-go-menu" class="btn-sub">Menu Principal</button>
