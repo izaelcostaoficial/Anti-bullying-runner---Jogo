@@ -2759,59 +2759,59 @@ EXEMPLOS
 
 // FX.screenTransition()
 /* ==========================================================
-BLOCO 13 — RUNNER ENGINE
+BLOCO 13 — RUNNER ENGINE (CORRIGIDO)
 ========================================================== */
 
-const Runner={
+const Runner = {
 
-canvas:null,
-ctx:null,
+canvas: null,
+ctx: null,
 
-running:false,
+running: false,
 
-lane:1,
+lane: 1,
 
-player:{
+player: {
 
-x:0,
-y:0,
+x: 0,
+y: 0,
 
-width:90,
-height:110,
+width: 90,
+height: 110,
 
-jump:0,
+jump: 0,
 
-jumping:false,
+jumping: false,
 
-slide:false,
+slide: false,
 
-velocity:0
-
-},
-
-world:{
-
-speed:10,
-
-distance:0
+velocity: 0
 
 },
 
-obstacles:[],
+world: {
 
-coins:[],
+speed: 10,
+distance: 0
 
-init(){
+},
 
-this.canvas=
+obstacles: [],
+coins: [],
+
+spawnInterval: null,
+
+init() {
+
+this.canvas =
 document.getElementById(
 "game-canvas"
 );
 
-if(!this.canvas)
+if (!this.canvas)
 return;
 
-this.ctx=
+this.ctx =
 this.canvas.getContext(
 "2d"
 );
@@ -2820,29 +2820,29 @@ this.resize();
 
 window.addEventListener(
 "resize",
-()=>this.resize()
+() => this.resize()
 );
 
 this.bind();
 
 },
 
-resize(){
+resize() {
 
-this.canvas.width=
+this.canvas.width =
 innerWidth;
 
-this.canvas.height=
+this.canvas.height =
 innerHeight;
 
-this.player.y=
-this.canvas.height-240;
+this.player.y =
+this.canvas.height - 240;
 
 },
 
-start(){
+start() {
 
-this.running=true;
+this.running = true;
 
 this.spawnLoop();
 
@@ -2850,23 +2850,26 @@ this.loop();
 
 },
 
-stop(){
+stop() {
 
-this.running=false;
+this.running = false;
+
+if (this.spawnInterval)
+clearInterval(this.spawnInterval);
 
 },
 
-bind(){
+bind() {
 
 addEventListener(
 "keydown",
 
-e=>{
+e => {
 
-if(!this.running)
+if (!this.running)
 return;
 
-switch(e.code){
+switch (e.code) {
 
 case "ArrowLeft":
 case "KeyA":
@@ -2904,30 +2907,28 @@ break;
 
 },
 
-move(dir){
+move(dir) {
 
-this.lane+=dir;
+this.lane += dir;
 
-if(this.lane<0)
-this.lane=0;
+if (this.lane < 0)
+this.lane = 0;
 
-if(this.lane>2)
-this.lane=2;
+if (this.lane > 2)
+this.lane = 2;
 
 FX.screenTransition();
 
 },
 
-jump(){
+jump() {
 
-if(
-this.player.jumping
-)
+if (this.player.jumping)
 return;
 
-this.player.jumping=true;
+this.player.jumping = true;
 
-this.player.velocity=-24;
+this.player.velocity = -24;
 
 FX.power(
 "⬆️ PULO"
@@ -2935,263 +2936,173 @@ FX.power(
 
 },
 
-slide(){
+slide() {
 
-this.player.slide=true;
+this.player.slide = true;
 
-setTimeout(
+setTimeout(() => {
 
-()=>{
+this.player.slide = false;
 
-this.player.slide=false;
-
-},
-
-700
-
-);
+}, 700);
 
 },
 
-spawnObstacle(){
+spawnObstacle() {
 
 this.obstacles.push({
 
-lane:
+lane: Math.floor(Math.random() * 3),
 
-Math.floor(
-Math.random()*3
-),
+y: -180,
 
-y:-180,
+width: 110,
 
-width:110,
+height: 110,
 
-height:110,
-
-type:
-
-[
+type: [
 "🚧",
 "🚂",
 "📦"
-
-][
-Math.floor(
-Math.random()*3
-)
-]
+][Math.floor(Math.random() * 3)]
 
 });
 
 },
 
-spawnCoin(){
+spawnCoin() {
 
 this.coins.push({
 
-lane:
+lane: Math.floor(Math.random() * 3),
 
-Math.floor(
-Math.random()*3
-),
-
-y:-120
+y: -120
 
 });
 
 },
 
-spawnLoop(){
+spawnLoop() {
 
-setInterval(
+if (this.spawnInterval)
+clearInterval(this.spawnInterval);
 
-()=>{
+this.spawnInterval = setInterval(() => {
 
-if(!this.running)
+if (!this.running)
 return;
 
-Math.random()>.35
-?
+Math.random() > 0.35
+? this.spawnObstacle()
+: this.spawnCoin();
 
-this.spawnObstacle()
-
-:
-
-this.spawnCoin();
+}, 1300);
 
 },
 
-1300
+playerX() {
+
+return (
+
+this.canvas.width / 2
+
++
+
+((this.lane - 1) * 180)
 
 );
 
 },
 
-playerX(){
+physics() {
 
-return(
+if (this.player.jumping) {
 
-this.canvas.width/2
+this.player.velocity += 1.2;
 
-)+
+this.player.jump += this.player.velocity;
 
-(
-(this.lane-1)
+if (this.player.jump > 0) {
 
-*180
+this.player.jump = 0;
+this.player.jumping = false;
+this.player.velocity = 0;
 
-);
+}
+
+}
+
+this.obstacles.forEach(o => {
+
+o.y += this.world.speed;
+
+});
+
+this.coins.forEach(c => {
+
+c.y += this.world.speed;
+
+});
+
+this.world.distance += this.world.speed;
 
 },
 
-physics(){
+drawTrack() {
 
-if(
-this.player.jumping
-){
+const c = this.ctx;
 
-this.player.velocity+=1.2;
-
-this.player.jump+=
-this.player.velocity;
-
-if(
-this.player.jump>0
-){
-
-this.player.jump=0;
-
-this.player.jumping=false;
-
-}
-
-}
-
-this.obstacles.forEach(
-
-o=>{
-
-o.y+=
-this.world.speed;
-
-}
-
-);
-
-this.coins.forEach(
-
-c=>{
-
-c.y+=
-this.world.speed;
-
-}
-
-);
-
-this.world.distance+=
-this.world.speed;
-
-},
-
-drawTrack(){
-
-const c=this.ctx;
-
-c.fillStyle=
-"#4430a5";
+c.fillStyle = "#4430a5";
 
 c.fillRect(
-
 0,
 0,
-
 this.canvas.width,
 this.canvas.height
-
 );
 
-for(
-let i=0;
-i<3;
-i++
-){
+for (let i = 0; i < 3; i++) {
 
-let x=
+let x =
+this.canvas.width / 2 +
+((i - 1) * 180);
 
-this.canvas.width/2+
-
-(
-(i-1)
-*180
-);
-
-c.fillStyle=
-
-i===1
-
-?
-
-"#4e47ff"
-
-:
-
-"#2d1f66";
+c.fillStyle =
+i === 1 ? "#4e47ff" : "#2d1f66";
 
 c.fillRect(
-
-x-70,
+x - 70,
 0,
-
 140,
 this.canvas.height
-
 );
 
 }
 
 },
 
-drawPlayer(){
+drawPlayer() {
 
-const c=this.ctx;
+const c = this.ctx;
 
-let x=
-this.playerX();
+let x = this.playerX();
 
-let y=
-
-this.player.y+
-
+let y =
+this.player.y +
 this.player.jump;
 
 c.save();
 
-c.translate(
-x,
-y
-);
+c.translate(x, y);
 
-c.font="90px serif";
+c.font = "90px serif";
 
-c.textAlign=
-"center";
+c.textAlign = "center";
 
 c.fillText(
 
-this.player.slide
-
-?
-
-"🛹"
-
-:
-
-"🧑‍🦱",
-
+this.player.slide ? "🛹" : "🧑‍🦱",
 0,
-
 0
 
 );
@@ -3200,121 +3111,57 @@ c.restore();
 
 },
 
-drawObstacles(){
+drawObstacles() {
 
-const c=this.ctx;
+const c = this.ctx;
 
-this.obstacles.forEach(
+this.obstacles.forEach(o => {
 
-o=>{
+let x =
+this.canvas.width / 2 +
+((o.lane - 1) * 180);
 
-let x=
+c.font = "82px serif";
 
-this.canvas.width/2+
+c.textAlign = "center";
 
-(
-(o.lane-1)
-*180
-);
+c.fillText(o.type, x, o.y);
 
-c.font=
-"82px serif";
-
-c.textAlign=
-"center";
-
-c.fillText(
-
-o.type,
-
-x,
-
-o.y
-
-);
-
-}
-
-);
+});
 
 },
 
-drawCoins(){
+drawCoins() {
 
-const c=this.ctx;
+const c = this.ctx;
 
-this.coins.forEach(
+this.coins.forEach(cn => {
 
-o=>{
+let x =
+this.canvas.width / 2 +
+((cn.lane - 1) * 180);
 
-let x=
+c.font = "42px serif";
 
-this.canvas.width/2+
+c.fillText("🪙", x, cn.y);
 
-(
-(o.lane-1)
-*180
-);
-
-c.font=
-"42px serif";
-
-c.fillText(
-
-"🪙",
-
-x,
-
-o.y
-
-);
-
-}
-
-);
+});
 
 },
 
-collect(){
+collect() {
 
-this.coins=
+this.coins = this.coins.filter(c => {
 
-this.coins.filter(
+let coinX =
+this.canvas.width / 2 +
+((c.lane - 1) * 180);
 
-c=>{
+let hit =
+Math.abs(this.playerX() - coinX) < 70 &&
+Math.abs(this.player.y - c.y) < 80;
 
-let hit=
-
-Math.abs(
-this.playerX()
-
--
-
-(
-this.canvas.width/2+
-
-(
-c.lane-1
-)
-*
-180
-)
-
-)
-
-<70
-
-&&
-
-Math.abs(
-
-this.player.y-
-c.y
-
-)
-
-<80;
-if(hit){
+if (hit) {
 
 FX.coin();
 
@@ -3324,78 +3171,40 @@ return false;
 
 return true;
 
-}
-
-);
+});
 
 },
 
-collision(){
+collision() {
 
-this.obstacles.forEach(
+this.obstacles.forEach(o => {
 
-o=>{
+let obsX =
+this.canvas.width / 2 +
+((o.lane - 1) * 180);
 
-let hit=
+let hit =
+Math.abs(this.playerX() - obsX) < 90 &&
+Math.abs(this.player.y + this.player.jump - o.y) < 90;
 
-Math.abs(
-
-this.playerX()
-
--
-
-(
-this.canvas.width/2+
-
-(
-(o.lane-1)
-*180
-)
-
-)
-
-<90
-
-&&
-
-Math.abs(
-
-this.player.y+
-
-this.player.jump-
-
-o.y
-
-)
-
-<90;
-
-if(hit){
+if (hit) {
 
 this.stop();
 
-alert(
-"Fim de jogo"
-);
+alert("Fim de jogo");
 
 }
 
-}
-
-);
+});
 
 },
 
-loop(){
+loop() {
 
-if(
-!this.running
-)
+if (!this.running)
 return;
 
-requestAnimationFrame(
-()=>this.loop()
-);
+requestAnimationFrame(() => this.loop());
 
 this.physics();
 
@@ -3404,14 +3213,10 @@ this.collect();
 this.collision();
 
 this.ctx.clearRect(
-
 0,
 0,
-
 this.canvas.width,
-
 this.canvas.height
-
 );
 
 this.drawTrack();
