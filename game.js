@@ -3294,8 +3294,10 @@ this.playerX()
 this.canvas.width/2+
 
 (
-(c.lane-1)
-*180
+c.lane-1
+)
+*
+180
 )
 
 )
@@ -3307,11 +3309,11 @@ this.canvas.width/2+
 Math.abs(
 
 this.player.y-
-
 c.y
 
-)<80;
+)
 
+<80;
 if(hit){
 
 FX.coin();
