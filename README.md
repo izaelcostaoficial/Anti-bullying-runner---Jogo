@@ -1,316 +1,62 @@
-# 🛡️ Anti-Bullying Runner v2.0 ULTRA
+[Anti-Bullying Runner Ultra.md](https://github.com/user-attachments/files/31285647/Anti-Bullying.Runner.Ultra.md)
 
-> Corra. Decida. Faça a diferença.
+# Anti-Bullying Runner Ultra
 
-Um jogo educativo estilo **Endless Runner**, inspirado em jogos modernos de corrida, criado para transformar diversão em aprendizado.
+**Anti-Bullying Runner Ultra** é um endless runner educativo em HTML5, CSS e JavaScript, criado para abordar empatia, respeito, inclusão, segurança e prevenção ao bullying de forma interativa.
 
-O objetivo não é apenas bater recordes — o jogador também encontra situações inspiradas em desafios reais e aprende como atitudes positivas podem fazer diferença.
-
----
-
-## 🎮 Jogar Agora
-
-🌐 https://izaelcostaoficial.github.io/Anti-bullying-runner---Jogo/
-
----
-
-# 📌 Índice
-
-- Sobre o Projeto
-- Recursos
-- Como Jogar
-- Controles
-- Sistema de Poderes
-- Sistema de Dilemas
-- Loja
-- Ranking Top Run
-- Progressão
-- Tecnologias
-- Objetivo Educativo
-- Futuras Atualizações
-- Créditos
-- Hashtags
-
----
-
-# 🧠 Sobre o Projeto
-
-Anti-Bullying Runner foi desenvolvido como um jogo educativo para unir:
-
-✔ Diversão  
-✔ Reflexão  
-✔ Progressão  
-✔ Tomada de decisões  
-✔ Conscientização
-
-Durante a corrida o jogador:
-
-🏃 desvia obstáculos  
-🪙 coleta moedas  
-💎 encontra gemas  
-⭐ sobe de nível  
-💬 responde dilemas  
-🏆 compete no ranking  
-
----
-
-# ✨ Recursos
-
-## Sistema de Corrida
-- Endless Runner
-- 3 pistas
-- Obstáculos dinâmicos
-- Velocidade progressiva
-
-## Sistema RPG
-- XP
-- Níveis
-- Evolução
-
-## Economia
-- Moedas
-- Gemas
-- Loja
-
-## Personalização
-- Vestes
-- Temas
-- Avatar
-
-## Sistema Educativo
-- Dilemas
-- Escolhas
-- Feedback
-
----
-
-# 🎮 Como Jogar
-
-Seu objetivo é sobreviver o máximo possível.
-
-Cada partida permite:
-
-⭐ ganhar experiência  
-🪙 acumular moedas  
-💎 desbloquear melhorias  
-🏆 subir no Top Run  
-
-Evite obstáculos e escolha respostas positivas.
-
----
-
-# ⌨️ Controles
-
-## Computador
-
-| Controle | Função |
-|----------|--------|
-| A / ← | Esquerda |
-| D / → | Direita |
-| ↑ | Pular |
-| ↓ | Deslizar |
-
----
-
-## Celular
-
-📱 Gestos:
-
-← deslizar esquerda  
-→ deslizar direita  
-↑ deslizar cima  
-↓ deslizar baixo  
-
-Botões inferiores:
-ativar poderes
-
----
-
-# 🛡️ Sistema de Poderes
-
-## 🛡 Escudo
-Protege contra uma colisão.
-
----
-
-## ⚡ Velocidade
-Aumenta velocidade e XP.
-
----
-
-## 🧲 Ímã
-Atrai moedas e gemas.
-
----
-
-## 🌀 Lentidão
-Diminui dificuldade temporariamente.
-
----
-
-## 🚀 Jetpack
-Permite voar sobre obstáculos.
-
----
-
-# 💬 Sistema de Dilemas
-
-Durante a corrida aparecem situações especiais.
-
-Exemplos:
-
-- exclusão social
-- provocações
-- apelidos ofensivos
-- pressão em grupo
-
-Escolhas corretas:
-
-✅ ganham XP  
-✅ ajudam evolução  
-✅ reforçam empatia  
-
----
-
-# 🛒 Loja
-
-Desbloqueie melhorias usando recursos.
-
-## Categorias
-
-🧥 Vestes
-
-🧪 Power-ups
-
-🎨 Temas
-
----
-
-# 🏆 Ranking — TOP RUN
-
-Compita pelas melhores pontuações.
-
-Sistema:
-
-🥇 Primeiro Lugar
-
-🥈 Segundo Lugar
-
-🥉 Terceiro Lugar
-
-Objetivo:
-
-Subir no pódio.
-
----
-
-# ⭐ Sistema de Progressão
-
-Cada partida aumenta:
-
-XP  
-Nível  
-Moedas  
-Gemas  
-
-Quanto mais joga:
-
-⬆ desbloqueia recursos  
-⬆ melhora desempenho  
-⬆ sobe no ranking  
-
----
-
-# ⚙ Tecnologias
+## Estrutura
 
 ```text
-HTML5
-CSS3
-JavaScript
-Canvas API
-LocalStorage
-Responsive Design
+Anti-Bullying-Runner/
+├── index.html
+├── style.css
+├── script.js
+└── README.md
 ```
 
----
+O projeto é estático e não depende de servidor próprio, banco de dados ou build. Os dados do jogador são armazenados no `LocalStorage` do navegador, permitindo uso direto em hospedagens como GitHub Pages.
 
-# 📚 Objetivo Educativo
+## Funcionalidades
 
-Este projeto incentiva:
+A versão atual preserva o menu, o runner em três pistas, obstáculos, colisões, coleta de moedas e gemas, power-ups, vidas, pontuação, XP, níveis, dilemas educativos, loja, ranking, configurações, pausa, game over, reinício, áudio e persistência local.
 
-❤️ Empatia
+A velocidade começa baixa e aumenta gradualmente durante a corrida. A progressão é baseada no tempo, com limite máximo para manter o jogo jogável: os primeiros 30 segundos são tranquilos, entre 30 e 60 segundos o ritmo aumenta, entre 1 e 2 minutos a dificuldade fica média e, depois disso, o desafio cresce de forma controlada.
 
-🤝 Respeito
+A interface possui modo claro e modo escuro, além dos temas Arcade, Floresta, Oceano e Pôr do Sol. O modo visual, tema, idioma, nome, volume, moedas, gemas, XP, compras e ranking são persistidos localmente.
 
-🧠 Pensamento crítico
+## Controles
 
-🗣 Comunicação
+| Ação | Teclado | Celular |
+|---|---|---|
+| Trocar de pista para a esquerda | `A` ou `←` | Deslizar para a esquerda |
+| Trocar de pista para a direita | `D` ou `→` | Deslizar para a direita |
+| Pular | `W` ou `↑` | Deslizar para cima |
+| Deslizar | `S` ou `↓` | Deslizar para baixo |
+| Pausar | `P` ou `Esc` | Botão de pausa |
+| Escudo | `Espaço` | Botão 🛡️ |
+| Velocidade | `Q` | Botão ⚡ |
+| Ímã | `E` | Botão 🧲 |
+| Lentidão | `R` | Botão 🌀 |
+| Jetpack | `F` | Botão 🚀 |
 
-🎯 Tomada de decisão
+## Execução local
 
-Mensagem principal:
+Abra `index.html` diretamente no navegador ou sirva a pasta com qualquer servidor estático. Para uma execução local simples:
 
-"Coragem também é pedir ajuda."
+```bash
+python3 -m http.server 4173
+```
 
----
+Em seguida, acesse `http://localhost:4173`.
 
-# 🚀 Futuras Atualizações
+## Publicação no GitHub Pages
 
-[ ] Novos personagens
+Crie um repositório, mantenha `index.html`, `style.css`, `script.js` e `README.md` na raiz e publique a branch escolhida em **Settings → Pages**. Como o projeto usa apenas caminhos relativos e APIs do navegador, ele é compatível com uma hospedagem estática sem ajustes de backend.
 
-[ ] Novos cenários
+## Áudio e privacidade
 
-[ ] Multiplayer
+Os efeitos sonoros e a música são sintetizados pela Web Audio API e podem exigir a primeira interação do usuário devido às políticas de autoplay dos navegadores. Nenhuma conta ou dado pessoal é enviado para um servidor; o nome e o progresso permanecem no dispositivo, no armazenamento local do navegador.
 
-[ ] Eventos
+## Testes realizados
 
-[ ] Sistema de conquistas
-
-[ ] Mais dilemas
-
-[ ] Ranking online
-
----
-
-# 👨‍💻 Créditos
-
-Projeto criado por:
-
-**Izael Costa**
-
-Desenvolvimento:
-HTML • CSS • JavaScript
-
-Versão:
-
-**v2.0 ULTRA**
-
----
-
-# 📢 Compartilhe
-
-#AntiBullyingRunner  
-#AntiBullying  
-#RunnerGame  
-#EducationalGame  
-#HTML5  
-#JavaScript  
-#CSS3  
-#WebGame  
-#GameDev  
-#Empatia  
-#CombateAoBullying  
-#TopRun  
-#MobileGame  
-#ProjetoEducacional  
-
----
-
-## ▶ JOGUE AGORA
-
-https://izaelcostaoficial.github.io/Anti-bullying-runner---Jogo/
-
----
-
-🛡️ **ANTI-BULLYING RUNNER v2.0 ULTRA**  
-**Corra. Decida. Faça a diferença.**
+Foi verificado o carregamento inicial, a transição para o menu, o cadastro local do nome, o início da corrida, renderização do canvas, HUD, pausa, configurações, modo claro/escuro, idioma, loja, abas de power-ups e temas, ranking vazio e navegação de retorno. A sintaxe do `script.js` também foi validada com `node --check`.
